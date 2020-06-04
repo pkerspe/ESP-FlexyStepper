@@ -33,3 +33,6 @@
 
 src/main.cpp
 platformio.ini
+
+.pio
+.vscode

@@ -41,7 +41,7 @@
 #include <Arduino.h>
 #include <stdlib.h>
 
-class FlexyStepper
+class ESP_FlexyStepper
 {
   public:
     ESP_FlexyStepper();
@@ -88,6 +88,7 @@ class FlexyStepper
     bool motionComplete();
     float getCurrentVelocityInStepsPerSecond(); 
     bool processMovement(void);
+    int getDirectionOfMotion(void);
     
     void emergencyStop(void);
 
