@@ -613,6 +613,8 @@ bool ESP_FlexyStepper::moveToHomeInSteps(long directionTowardHome,
   // successfully homed, set the current position to 0
   //
   setCurrentPositionInSteps(0L);
+  
+  setTargetPositionInSteps(0L);
 
   //
   // restore original velocity
