@@ -61,26 +61,79 @@
 //
 ESP_FlexyStepper::ESP_FlexyStepper()
 {
-  stepsPerRevolution = 200L;
-  stepsPerMillimeter = 25.0;
-  directionOfMotion = 0;
-  currentPosition_InSteps = 0L;
-  targetPosition_InSteps = 0L;
-  setSpeedInStepsPerSecond(200);
-  setAccelerationInStepsPerSecondPerSecond(200.0);
-  setDecelerationInStepsPerSecondPerSecond(200.0);
-  currentStepPeriod_InUS = 0.0;
-  nextStepPeriod_InUS = 0.0;
-  emergency_stop = false;
+  this->stepsPerRevolution = 200L;
+  this->stepsPerMillimeter = 25.0;
+  this->directionOfMotion = 0;
+  this->currentPosition_InSteps = 0L;
+  this->targetPosition_InSteps = 0L;
+  this->setSpeedInStepsPerSecond(200);
+  this->setAccelerationInStepsPerSecondPerSecond(200.0);
+  this->setDecelerationInStepsPerSecondPerSecond(200.0);
+  this->currentStepPeriod_InUS = 0.0;
+  this->nextStepPeriod_InUS = 0.0;
+  this->emergencyStopActive = false;
+  this->holdEmergencyStopUntilExplicitRelease = false;
+  this->isCurrentlyHomed = false;
+  this->directionTowardsHome = -1;
+  this->disallowedDirection = 0;
+  this->activeLimitSwitch = 0; //see LIMIT_SWITCH_BEGIN and LIMIT_SWITCH_END
+  this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
+  this->limitSwitchCheckPeformed = false;
 }
 
 /**
  * perform an emergency stop, causing all movements to be canceled instantly
+ * the optional parameter 'holdUntilReleased' allows to define if the emergency stop shall only affect the current motion (if any) 
+ * or if it should hold the emergency stop status (kind of a latching functionality) until the releaseEmergencyStop() function is called explicitly.
+ * Default for holdUntilReleased is false (if paremter is ommitted)
  */
-void ESP_FlexyStepper::emergencyStop()
+void ESP_FlexyStepper::emergencyStop(bool holdUntilReleased)
 {
-  if (!motionComplete())
-    emergency_stop = true;
+  this->holdEmergencyStopUntilExplicitRelease = holdUntilReleased;
+  this->emergencyStopActive = (!this->motionComplete() || this->holdEmergencyStopUntilExplicitRelease);
+}
+
+/**
+ * releases an emergency stop that has previously been engaded using a call to emergencyStop(true)
+ */
+void ESP_FlexyStepper::releaseEmergencyStop()
+{
+  this->emergencyStopActive = false;
+}
+
+/**
+ *  configure the direction in which to move to reach the home position
+ *  Accepts 1 or -1 as allowed values. Other values will be ignored
+ */
+void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
+{
+  if (directionTowardHome == -1 && directionTowardHome == 0)
+  {
+    this->directionTowardsHome = directionTowardsHome;
+  }
+}
+
+/**
+ * Notification of an externaly detected limit switch activation
+ * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END as parameter values to indicate 
+ * whether the limit switch near the begin (direction of home position) or at the end of the movement has ben triggered.
+ * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and retriggering the limit switch function
+ */
+void ESP_FlexyStepper::setLimitSwitchActive(byte limitSwitchType)
+{
+  if (limitSwitchType == LIMIT_SWITCH_BEGIN || limitSwitchType == LIMIT_SWITCH_END || limitSwitchType == LIMIT_SWITCH_COMBINED_BEGIN_AND_END)
+  {
+    this->activeLimitSwitch = limitSwitchType;
+    this->limitSwitchCheckPeformed = false; //set flag for newly set limit switch trigger
+  }
+}
+
+/**
+ * clear the limit switch flag to allow movement in both directions again
+ */
+void ESP_FlexyStepper::clearLimitSwitchActive()
+{
+  this->activeLimitSwitch = 0;
 }
 
 /**
@@ -94,24 +147,26 @@ int ESP_FlexyStepper::getDirectionOfMotion(void)
   return this->directionOfMotion;
 }
 
-//
-// connect the stepper object to the IO pins
-//  Enter:  stepPinNumber = IO pin number for the Step
-//          directionPinNumber = IO pin number for the direction bit
-//          enablePinNumber = IO pin number for the enable bit (LOW is enabled)
-//            set to 0 if enable is not supported
-//
+/**
+ * returns true if the stepper is currently in motion and moving in the direction of the home position.
+ * Depends on the settings of setDirectionToHome() which defines where "home" is...a rather philosophical question :-)
+ */
+bool ESP_FlexyStepper::isMovingTowardsHome()
+{
+  return (this->directionOfMotion == this->directionTowardsHome);
+}
+
+/*
+* connect the stepper object to the IO pins
+* stepPinNumber = IO pin number for the Step signale
+* directionPinNumber = IO pin number for the direction signal
+*/
 void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber)
 {
-  //
-  // remember the pin numbers
-  //
-  stepPin = stepPinNumber;
-  directionPin = directionPinNumber;
+  this->stepPin = stepPinNumber;
+  this->directionPin = directionPinNumber;
 
-  //
-  // configure the IO bits
-  //
+  // configure the IO pins
   pinMode(stepPin, OUTPUT);
   digitalWrite(stepPin, LOW);
 
@@ -200,7 +255,7 @@ void ESP_FlexyStepper::setDecelerationInMillimetersPerSecondPerSecond(
 //            configured to go low when at home
 //  Exit:   true returned if successful, else false
 //
-bool ESP_FlexyStepper::moveToHomeInMillimeters(long directionTowardHome,
+bool ESP_FlexyStepper::moveToHomeInMillimeters(signed char directionTowardHome,
                                                float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters,
                                                int homeLimitSwitchPin)
 {
@@ -361,7 +416,7 @@ void ESP_FlexyStepper::setDecelerationInRevolutionsPerSecondPerSecond(
 //            configured to go low when at home
 //  Exit:   true returned if successful, else false
 //
-bool ESP_FlexyStepper::moveToHomeInRevolutions(long directionTowardHome,
+bool ESP_FlexyStepper::moveToHomeInRevolutions(signed char directionTowardHome,
                                                float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions,
                                                int homeLimitSwitchPin)
 {
@@ -504,6 +559,16 @@ void ESP_FlexyStepper::setDecelerationInStepsPerSecondPerSecond(
   deceleration_InStepsPerUSPerUS = deceleration_InStepsPerSecondPerSecond / 1E12;
 }
 
+void ESP_FlexyStepper::setCurrentPositionAsHomeAndStop()
+{
+  this->currentStepPeriod_InUS = 0.0;
+  this->nextStepPeriod_InUS = 0.0;
+  this->directionOfMotion = 0;
+  this->currentPosition_InSteps = 0;
+  this->targetPosition_InSteps = 0;
+  this->isCurrentlyHomed = true;
+}
+
 //
 // home the motor by moving until the homing sensor is activated, then set the
 // position to zero with units in steps
@@ -517,7 +582,7 @@ void ESP_FlexyStepper::setDecelerationInStepsPerSecondPerSecond(
 //            configured to go low when at home
 //  Exit:   true returned if successful, else false
 //
-bool ESP_FlexyStepper::moveToHomeInSteps(long directionTowardHome,
+bool ESP_FlexyStepper::moveToHomeInSteps(signed char directionTowardHome,
                                          float speedInStepsPerSecond, long maxDistanceToMoveInSteps,
                                          int homeLimitSwitchPin)
 {
@@ -613,9 +678,10 @@ bool ESP_FlexyStepper::moveToHomeInSteps(long directionTowardHome,
   // successfully homed, set the current position to 0
   //
   setCurrentPositionInSteps(0L);
-  
-  setTargetPositionInSteps(0L);
 
+  setTargetPositionInSteps(0L);
+  this->isCurrentlyHomed = true;
+  this->disallowedDirection = directionTowardHome;
   //
   // restore original velocity
   //
@@ -702,121 +768,148 @@ void ESP_FlexyStepper::setTargetPositionToStop()
 //
 bool ESP_FlexyStepper::processMovement(void)
 {
-  if (emergency_stop)
+  if (emergencyStopActive)
   {
     currentStepPeriod_InUS = 0.0;
     nextStepPeriod_InUS = 0.0;
     directionOfMotion = 0;
     targetPosition_InSteps = currentPosition_InSteps;
-    emergency_stop = false;
+
+    if (!this->holdEmergencyStopUntilExplicitRelease)
+    {
+      emergencyStopActive = false;
+    }
     return (true);
+  }
+
+  long distanceToTarget_Signed;
+
+  if (this->activeLimitSwitch != 0)
+  {
+    distanceToTarget_Signed = targetPosition_InSteps - currentPosition_InSteps;
+    if (!this->limitSwitchCheckPeformed)
+    {
+      this->limitSwitchCheckPeformed = true;
+      //a limit switch is active, so movement is only allowed in one direction (away from the switch)
+      if (this->activeLimitSwitch == this->LIMIT_SWITCH_BEGIN)
+      {
+        this->disallowedDirection = this->directionTowardsHome;
+      }
+      else if (this->activeLimitSwitch == this->LIMIT_SWITCH_END)
+      {
+        this->disallowedDirection = this->directionTowardsHome * -1;
+      }
+      else if (this->activeLimitSwitch == this->LIMIT_SWITCH_COMBINED_BEGIN_AND_END)
+      {
+        //limit switches are paired together, so we need to try to figure out by checking which one it is, by using the last used step direction
+        if (distanceToTarget_Signed > 0)
+        {
+          this->lastStepDirectionBeforeLimitSwitchTrigger = 1;
+          this->disallowedDirection = 1;
+        }
+        else if (distanceToTarget_Signed < 0)
+        {
+          this->lastStepDirectionBeforeLimitSwitchTrigger = -1;
+          this->disallowedDirection = -1;
+        }
+      }
+    }
+
+    if (
+        (this->disallowedDirection == 1 && distanceToTarget_Signed > 0) ||
+        (this->disallowedDirection == -1 && distanceToTarget_Signed < 0))
+    {
+      currentStepPeriod_InUS = 0.0;
+      nextStepPeriod_InUS = 0.0;
+      directionOfMotion = 0;
+      targetPosition_InSteps = currentPosition_InSteps;
+      return true;
+    }
+    else
+    {
+      //Serial.printf("current movement is in allowed direction %i (distance is %ld)\n", this->disallowedDirection, distanceToTarget_Signed);
+    }
   }
 
   unsigned long currentTime_InUS;
   unsigned long periodSinceLastStep_InUS;
-  long distanceToTarget_Signed;
+
   //
   // check if currently stopped
   //
   if (directionOfMotion == 0)
   {
     distanceToTarget_Signed = targetPosition_InSteps - currentPosition_InSteps;
-
-    //
     // check if target position in a positive direction
-    //
     if (distanceToTarget_Signed > 0)
     {
       directionOfMotion = 1;
       digitalWrite(directionPin, POSITIVE_DIRECTION);
       nextStepPeriod_InUS = periodOfSlowestStep_InUS;
       lastStepTime_InUS = micros();
+      lastStepDirectionBeforeLimitSwitchTrigger = directionOfMotion;
       return (false);
     }
 
-    //
     // check if target position in a negative direction
-    //
     else if (distanceToTarget_Signed < 0)
     {
       directionOfMotion = -1;
       digitalWrite(directionPin, NEGATIVE_DIRECTION);
       nextStepPeriod_InUS = periodOfSlowestStep_InUS;
       lastStepTime_InUS = micros();
+      lastStepDirectionBeforeLimitSwitchTrigger = directionOfMotion;
       return (false);
     }
 
     else
+    {
+      this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
       return (true);
+    }
   }
 
-  //
   // determine how much time has elapsed since the last step (Note 1: this method
   // works even if the time has wrapped. Note 2: all variables must be unsigned)
-  //
   currentTime_InUS = micros();
   periodSinceLastStep_InUS = currentTime_InUS - lastStepTime_InUS;
-
-  //
   // if it is not time for the next step, return
-  //
   if (periodSinceLastStep_InUS < (unsigned long)nextStepPeriod_InUS)
     return (false);
 
-  //
   // execute the step on the rising edge
-  //
   digitalWrite(stepPin, HIGH);
 
-  //
-  // this delay almost nothing because there's so much code between rising &
-  // falling edges
-  //
-  //delayMicroseconds(2);
-
-  //
   // update the current position and speed
-  //
   currentPosition_InSteps += directionOfMotion;
   currentStepPeriod_InUS = nextStepPeriod_InUS;
 
-  //
   // remember the time that this step occured
-  //
   lastStepTime_InUS = currentTime_InUS;
 
-  //
   // figure out how long before the next step
-  //
   DeterminePeriodOfNextStep();
 
-  //
   // return the step line low
-  //
   digitalWrite(stepPin, LOW);
 
-  //
   // check if the move has reached its final target position, return true if all
   // done
-  //
   if (currentPosition_InSteps == targetPosition_InSteps)
   {
-    //
     // at final position, make sure the motor is not going too fast
-    //
     if (nextStepPeriod_InUS >= minimumPeriodForAStoppedMotion)
     {
       currentStepPeriod_InUS = 0.0;
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
+      this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
       return (true);
     }
   }
-
   return (false);
 }
 
-//
 // Get the current velocity of the motor in steps/second.  This functions is
 // updated while it accelerates up and down in speed.  This is not the desired
 // speed, but the speed the motor should be moving at the time the function is

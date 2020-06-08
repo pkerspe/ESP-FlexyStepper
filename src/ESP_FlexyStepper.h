@@ -54,7 +54,7 @@ class ESP_FlexyStepper
     void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond);
     void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond);
     void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond);
-    bool moveToHomeInMillimeters(long directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin);
+    bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin);
     void moveRelativeInMillimeters(float distanceToMoveInMillimeters);
     void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
     void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
@@ -67,7 +67,7 @@ class ESP_FlexyStepper
     void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond);
     void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond);
     void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond);
-    bool moveToHomeInRevolutions(long directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin);
+    bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin);
     void moveRelativeInRevolutions(float distanceToMoveInRevolutions);
     void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
     void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
@@ -75,23 +75,35 @@ class ESP_FlexyStepper
     float getCurrentVelocityInRevolutionsPerSecond();
 
     void setCurrentPositionInSteps(long currentPositionInSteps);
+    void setCurrentPositionAsHomeAndStop(void);
     long getCurrentPositionInSteps();
     void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
     void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
     void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
-    bool moveToHomeInSteps(long directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin);
+    bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin);
     void moveRelativeInSteps(long distanceToMoveInSteps);
     void setTargetPositionRelativeInSteps(long distanceToMoveInSteps);
     void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
     void setTargetPositionInSteps(long absolutePositionToMoveToInSteps);
     void setTargetPositionToStop();
+    // configure the direction in which to move to reach the home switch
+    void setDirectionToHome(signed char directionTowardHome);
+    // externally trigger a limit switch acitvation
+    void setLimitSwitchActive(byte limitSwitchType);
+    // externally clear limit switch flag, to allow movement again 
+    void clearLimitSwitchActive(void);
     bool motionComplete();
     float getCurrentVelocityInStepsPerSecond(); 
     bool processMovement(void);
     int getDirectionOfMotion(void);
+    bool isMovingTowardsHome(void);
     
-    void emergencyStop(void);
+    void emergencyStop(bool holdUntilReleased = false);
+    void releaseEmergencyStop(void);
 
+    const byte LIMIT_SWITCH_BEGIN = -1;
+    const byte LIMIT_SWITCH_END  = 1;
+    const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
 
   private:
     void DeterminePeriodOfNextStep();
@@ -114,7 +126,16 @@ class ESP_FlexyStepper
     float nextStepPeriod_InUS;
     unsigned long lastStepTime_InUS;
     float currentStepPeriod_InUS;
-    bool emergency_stop;
+    bool emergencyStopActive;
+    bool holdEmergencyStopUntilExplicitRelease;
+    signed char directionTowardsHome;
+    signed char lastStepDirectionBeforeLimitSwitchTrigger;
+    //true if the current stepper positon equals the homing position
+    bool isCurrentlyHomed;
+    signed char activeLimitSwitch;
+    bool limitSwitchCheckPeformed;
+    // 0 if the the stepper is allowed to move in both directions (e.g. no limit or homing switch triggered), otherwise indicated which direction is currently not allowed for further movement
+    signed char disallowedDirection;
 };
 
 // ------------------------------------ End ---------------------------------
