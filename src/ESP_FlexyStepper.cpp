@@ -81,6 +81,39 @@ ESP_FlexyStepper::ESP_FlexyStepper()
   this->limitSwitchCheckPeformed = false;
 }
 
+void ESP_FlexyStepper::startAsService(void)
+{
+  disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  xTaskCreate(
+      ESP_FlexyStepper::taskRunner, /* Task function. */
+      "FlexyStepper",  /* String with name of task. */
+      10000,                        /* Stack size in bytes. */
+      this,                         /* Parameter passed as input of the task */
+      1,                            /* Priority of the task. */
+      &this->xHandle);              /* Task handle. */
+}
+
+void ESP_FlexyStepper::taskRunner(void *parameter)
+{
+  ESP_FlexyStepper *stepperRef = (ESP_FlexyStepper *)parameter;
+  while (true)
+  {
+    stepperRef->processMovement();
+    yield();
+  }
+}
+
+void ESP_FlexyStepper::stopService(void)
+{
+  vTaskDelete(this->xHandle);
+  this->xHandle = NULL;
+}
+
+bool ESP_FlexyStepper::isStartedAsService()
+{
+  return (this->xHandle != NULL);
+}
+
 /**
  * perform an emergency stop, causing all movements to be canceled instantly
  * the optional parameter 'holdUntilReleased' allows to define if the emergency stop shall only affect the current motion (if any) 

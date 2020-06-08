@@ -131,6 +131,6 @@ void loop()
   // call the function to update the position of the stepper in one increment
   // for smooth movements this requires that the loop function in general has no long lasting blocking call (or delays) to other functions and can be processes in a rather short time
   // if you need to perform long running operations in the loop, this approach will not work for you and you should start a vtask instead that calls the processMovment function
-  // see example 4 for an example using a separate task on an ESP32 module to keep the loop completely free for your own code without bothering with slim code or blocking calls
+  // see example 5 for an example using a separate task on an ESP32 module to keep the loop completely free for your own code without bothering with slim code or blocking calls
   stepper.processMovement();
 }
