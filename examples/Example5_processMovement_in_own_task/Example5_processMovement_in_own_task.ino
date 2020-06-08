@@ -53,10 +53,12 @@ void loop()
   // just move the stepper back and forth in an endless loop
   if (stepper.getDirectionOfMotion() == 0)
   {
+    delay(5000);
     previousDirection *= -1;
-    long targetPosition = DISTANCE_TO_TRAVEL_IN_STEPS * previousDirection;
-    stepper.setTargetPositionRelativeInSteps(targetPosition);
-    delay(4000);
+    long relativeTargetPosition = DISTANCE_TO_TRAVEL_IN_STEPS * previousDirection;
+    Serial.printf("Moving stepper by %ld steps\n", relativeTargetPosition);
+    stepper.setTargetPositionRelativeInSteps(relativeTargetPosition);
+    delay(10);
   }
   
   // Notice that you can now do whatever you want in the loop function without the need to call processMovement().
