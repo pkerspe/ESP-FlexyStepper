@@ -2,13 +2,14 @@
 //      *                            Example  5:                              *
 //      * this example shows how run the flexy stepper in a non blocking way  *
 //      * without the need of any needed function calls in the loop function  *
+//      * A separate task is started to take care of sending the step signals *
 //      *                                                                     *
 //      *               Paul Kerspe               8.6.2020                    *
 //      *                                                                     *
 //      ***********************************************************************
 
-// In order to run the example, change the IO pin numbers to match your configuration (lines 29-32)
-// you might also want to change the speed and distance settings according to your setup if needed (lines 35-38)
+// In order to run the example, change the IO pin numbers to match your configuration (lines 21-24)
+// you might also want to change the speed and distance settings according to your setup if needed (lines 27-30)
 //
 // Documentation for this library can be found at:
 //    https://github.com/pkerspe/ESP-FlexyStepper/blob/master/README.md
