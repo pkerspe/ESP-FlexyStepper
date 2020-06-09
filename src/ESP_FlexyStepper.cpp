@@ -86,20 +86,20 @@ void ESP_FlexyStepper::startAsService(void)
   disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
   xTaskCreate(
       ESP_FlexyStepper::taskRunner, /* Task function. */
-      "FlexyStepper",  /* String with name of task. */
-      10000,                        /* Stack size in bytes. */
+      "FlexyStepper",               /* String with name of task (by default max 16 characters long) */
+      1000,                        /* Stack size in bytes. */
       this,                         /* Parameter passed as input of the task */
-      1,                            /* Priority of the task. */
+      1,                            /* Priority of the task, 1 seems to work just fine for us */
       &this->xHandle);              /* Task handle. */
 }
 
 void ESP_FlexyStepper::taskRunner(void *parameter)
 {
   ESP_FlexyStepper *stepperRef = (ESP_FlexyStepper *)parameter;
-  while (true)
+  for( ;; )
   {
     stepperRef->processMovement();
-    yield();
+    //vTaskDelay(1); // This would be a working solution to prevent the WDT to fire (if not disabled, yet it will cause noticeably less smooth stepper movements / lower frequencies)
   }
 }
 
@@ -112,6 +112,29 @@ void ESP_FlexyStepper::stopService(void)
 bool ESP_FlexyStepper::isStartedAsService()
 {
   return (this->xHandle != NULL);
+}
+
+/**
+ * get the overall max stack size since task creation (since the call to startAsService() )
+ * This function is used to determine if the stacksize is large enough and has more of a debugging purpose.
+ * Return the minimum amount of free bytes on the stack that has been measured so far.
+ */
+long ESP_FlexyStepper::getTaskStackHighWaterMark()
+{
+  if (this->isStartedAsService())
+  {
+    return uxTaskGetStackHighWaterMark(this->xHandle);
+  }
+  return 0;
+}
+
+/**
+ * get the distance in steps to the currently set target position.
+ * 0 is returned if the stepper is already at the target position.
+ * The returned value is signed, depending on the direction to move to reach the target
+ */
+long ESP_FlexyStepper::getDistanceToTargetSigned(){
+  return (this->targetPosition_InSteps - this->currentPosition_InSteps);
 }
 
 /**

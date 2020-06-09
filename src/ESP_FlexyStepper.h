@@ -48,6 +48,7 @@ public:
   void connectToPins(byte stepPinNumber, byte directionPinNumber);
   static void taskRunner(void *parameter);
   bool isStartedAsService(void);
+  long getTaskStackHighWaterMark(void);
 
   void setStepsPerMillimeter(float motorStepPerMillimeter);
   float getCurrentPositionInMillimeters();
@@ -61,7 +62,8 @@ public:
   void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
   void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
   void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
-  float getCurrentVelocityInMillimetersPerSecond();
+  float getCurrentVelocityInMillimetersPerSecond(void);
+  long getDistanceToTargetSigned(void);
 
   void setStepsPerRevolution(float motorStepPerRevolution);
   void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
