@@ -105,9 +105,9 @@ public:
   void emergencyStop(bool holdUntilReleased = false);
   void releaseEmergencyStop(void);
 
-  const byte LIMIT_SWITCH_BEGIN = -1;
-  const byte LIMIT_SWITCH_END = 1;
-  const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
+  static const byte LIMIT_SWITCH_BEGIN = -1;
+  static const byte LIMIT_SWITCH_END = 1;
+  static const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
 
 private:
   void DeterminePeriodOfNextStep();
