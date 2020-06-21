@@ -39,77 +39,105 @@
 #include <Arduino.h>
 #include <stdlib.h>
 
+typedef void (*callbackFunction)(void);
+
 class ESP_FlexyStepper
 {
 public:
   ESP_FlexyStepper();
+  //service functions
   void startAsService(void);
   void stopService(void);
-  void connectToPins(byte stepPinNumber, byte directionPinNumber);
-  static void taskRunner(void *parameter);
   bool isStartedAsService(void);
+
+  //IO setup and helper / debugging functions
+  void connectToPins(byte stepPinNumber, byte directionPinNumber);
   long getTaskStackHighWaterMark(void);
-
-  void setStepsPerMillimeter(float motorStepPerMillimeter);
-  float getCurrentPositionInMillimeters();
-  void setCurrentPositionInMillimeters(float currentPositionInMillimeters);
-  void setCurrentPositionInMillimeter(float currentPositionInMillimeter);
-  void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond);
-  void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond);
-  void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond);
-  bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin);
-  void moveRelativeInMillimeters(float distanceToMoveInMillimeters);
-  void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
-  void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
-  void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
-  float getCurrentVelocityInMillimetersPerSecond(void);
-  long getDistanceToTargetSigned(void);
-
-  void setStepsPerRevolution(float motorStepPerRevolution);
-  void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
-  float getCurrentPositionInRevolutions();
-  void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond);
-  void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond);
-  void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond);
-  bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin);
-  void moveRelativeInRevolutions(float distanceToMoveInRevolutions);
-  void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
-  void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
-  void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
-  float getCurrentVelocityInRevolutionsPerSecond();
-
-  void setCurrentPositionInSteps(long currentPositionInSteps);
-  void setCurrentPositionAsHomeAndStop(void);
-  long getCurrentPositionInSteps();
-  void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
-  void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
-  void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
-  bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin);
-  void moveRelativeInSteps(long distanceToMoveInSteps);
-  void setTargetPositionRelativeInSteps(long distanceToMoveInSteps);
-  void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
-  void setTargetPositionInSteps(long absolutePositionToMoveToInSteps);
-  void setTargetPositionToStop();
-  // configure the direction in which to move to reach the home switch
-  void setDirectionToHome(signed char directionTowardHome);
-  // externally trigger a limit switch acitvation
-  void setLimitSwitchActive(byte limitSwitchType);
-  // externally clear limit switch flag, to allow movement again
   void clearLimitSwitchActive(void);
   bool motionComplete();
-  float getCurrentVelocityInStepsPerSecond();
-  bool processMovement(void);
   int getDirectionOfMotion(void);
   bool isMovingTowardsHome(void);
-
   void emergencyStop(bool holdUntilReleased = false);
   void releaseEmergencyStop(void);
+  //the central function to calculate the next movment step signal
+  bool processMovement(void);
+
+  //register function for callbacks
+  void registerHomeReachedCallback(callbackFunction homeReachedCallbackFunction);
+  void registerLimitReachedCallback(callbackFunction limitSwitchTriggerdCallbackFunction);
+  void registerTargetPositionReachedCallback(callbackFunction targetPositionReachedCallbackFunction);
+  void registerEmergencyStopTriggeredCallback(callbackFunction emergencyStopTriggerdCallbackFunction);
+  void registerEmergencyStopReleasedCallback(callbackFunction emergencyStopReleasedCallbackFunction);
+
+  //configuration functions
+  void setStepsPerMillimeter(float motorStepPerMillimeter);
+  void setStepsPerRevolution(float motorStepPerRevolution);
+  void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
+  void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond);
+  void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond);
+  void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond);
+  void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond);
+  void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond);
+  void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond);
+  void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
+  void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
+  void setDirectionToHome(signed char directionTowardHome);
+  void setLimitSwitchActive(byte limitSwitchType);
+
+  float getCurrentVelocityInStepsPerSecond();
+  float getCurrentVelocityInRevolutionsPerSecond();
+  float getCurrentVelocityInMillimetersPerSecond(void);
+
+  //positioning functions
+  void setCurrentPositionInSteps(long currentPositionInSteps);
+  void setCurrentPositionInMillimeters(float currentPositionInMillimeters);
+  void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
+
+  long getCurrentPositionInSteps();
+  float getCurrentPositionInRevolutions();
+  float getCurrentPositionInMillimeters();
+
+  void startJogging(signed char direction);
+  void stopJogging();
+  void goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome = NULL);
+  
+
+  void setCurrentPositionAsHomeAndStop(void);
+  void setTargetPositionToStop();
+  long getDistanceToTargetSigned(void);
+
+  void setTargetPositionInSteps(long absolutePositionToMoveToInSteps);
+  void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
+  void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
+  void setTargetPositionRelativeInSteps(long distanceToMoveInSteps);
+  void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
+  void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
+
+  //blocking function calls
+  void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
+  void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
+  void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
+  void moveRelativeInSteps(long distanceToMoveInSteps);
+  void moveRelativeInMillimeters(float distanceToMoveInMillimeters);
+  void moveRelativeInRevolutions(float distanceToMoveInRevolutions);
+
+  bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin);
+  bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin);
+  bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin);
 
   static const byte LIMIT_SWITCH_BEGIN = -1;
   static const byte LIMIT_SWITCH_END = 1;
   static const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
 
 private:
+  callbackFunction _homeReachedCallback;
+  callbackFunction _limitTriggeredCallback;
+  callbackFunction _emergencyStopTriggeredCallback;
+  callbackFunction _emergencyStopReleasedCallback;
+  callbackFunction _targetPositionReachedCallback;
+
+  static void taskRunner(void *parameter);
+
   void DeterminePeriodOfNextStep();
 
   byte stepPin;
@@ -136,6 +164,8 @@ private:
   signed char lastStepDirectionBeforeLimitSwitchTrigger;
   //true if the current stepper positon equals the homing position
   bool isCurrentlyHomed;
+  bool isOnWayToHome = false;
+  bool firstProcessingAfterTargetReached = true;
   signed char activeLimitSwitch;
   bool limitSwitchCheckPeformed;
   // 0 if the the stepper is allowed to move in both directions (e.g. no limit or homing switch triggered), otherwise indicated which direction is currently not allowed for further movement

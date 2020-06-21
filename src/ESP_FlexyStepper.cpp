@@ -87,7 +87,7 @@ void ESP_FlexyStepper::startAsService(void)
   xTaskCreate(
       ESP_FlexyStepper::taskRunner, /* Task function. */
       "FlexyStepper",               /* String with name of task (by default max 16 characters long) */
-      1000,                        /* Stack size in bytes. */
+      2000,                         /* Stack size in bytes. */
       this,                         /* Parameter passed as input of the task */
       1,                            /* Priority of the task, 1 seems to work just fine for us */
       &this->xHandle);              /* Task handle. */
@@ -96,7 +96,7 @@ void ESP_FlexyStepper::startAsService(void)
 void ESP_FlexyStepper::taskRunner(void *parameter)
 {
   ESP_FlexyStepper *stepperRef = (ESP_FlexyStepper *)parameter;
-  for( ;; )
+  for (;;)
   {
     stepperRef->processMovement();
     //vTaskDelay(1); // This would be a working solution to prevent the WDT to fire (if not disabled, yet it will cause noticeably less smooth stepper movements / lower frequencies)
@@ -133,7 +133,8 @@ long ESP_FlexyStepper::getTaskStackHighWaterMark()
  * 0 is returned if the stepper is already at the target position.
  * The returned value is signed, depending on the direction to move to reach the target
  */
-long ESP_FlexyStepper::getDistanceToTargetSigned(){
+long ESP_FlexyStepper::getDistanceToTargetSigned()
+{
   return (this->targetPosition_InSteps - this->currentPosition_InSteps);
 }
 
@@ -147,6 +148,10 @@ void ESP_FlexyStepper::emergencyStop(bool holdUntilReleased)
 {
   this->holdEmergencyStopUntilExplicitRelease = holdUntilReleased;
   this->emergencyStopActive = (!this->motionComplete() || this->holdEmergencyStopUntilExplicitRelease);
+  if (this->_emergencyStopTriggeredCallback)
+  {
+    this->_emergencyStopTriggeredCallback();
+  }
 }
 
 /**
@@ -155,6 +160,10 @@ void ESP_FlexyStepper::emergencyStop(bool holdUntilReleased)
 void ESP_FlexyStepper::releaseEmergencyStop()
 {
   this->emergencyStopActive = false;
+  if (this->_emergencyStopReleasedCallback)
+  {
+    this->_emergencyStopReleasedCallback();
+  }
 }
 
 /**
@@ -181,6 +190,10 @@ void ESP_FlexyStepper::setLimitSwitchActive(byte limitSwitchType)
   {
     this->activeLimitSwitch = limitSwitchType;
     this->limitSwitchCheckPeformed = false; //set flag for newly set limit switch trigger
+    if (this->_limitTriggeredCallback)
+    {
+      this->_limitTriggeredCallback();
+    }
   }
 }
 
@@ -615,14 +628,103 @@ void ESP_FlexyStepper::setDecelerationInStepsPerSecondPerSecond(
   deceleration_InStepsPerUSPerUS = deceleration_InStepsPerSecondPerSecond / 1E12;
 }
 
+/**
+ * set the current position as the home position (Step count = 0)
+ */
 void ESP_FlexyStepper::setCurrentPositionAsHomeAndStop()
 {
+  this->isOnWayToHome = false;
   this->currentStepPeriod_InUS = 0.0;
   this->nextStepPeriod_InUS = 0.0;
   this->directionOfMotion = 0;
   this->currentPosition_InSteps = 0;
   this->targetPosition_InSteps = 0;
   this->isCurrentlyHomed = true;
+}
+
+/**
+ * start jogging in the direction of home (use setDirectionToHome() to set the proper direction) until the limit switch is hit, then set the position as home
+ * Warning: This function requires a limit switch to be configured otherwise the motor will never stop jogging.
+ * This is a non blocking function, you need make sure ESP_FlexyStepper is started as service (use startAsService() function) or need to call the processMovement function manually in your main loop.
+ */
+void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome)
+{
+  if (callbackFunctionForHome)
+  {
+    this->_homeReachedCallback = callbackFunctionForHome;
+  }
+  if (this->activeLimitSwitch == 0)
+  {
+    this->setTargetPositionInSteps(this->directionTowardsHome * 2000000000);
+  }
+  else
+  {
+    if (this->_limitTriggeredCallback)
+    {
+      this->_limitTriggeredCallback();
+    }
+  }
+  this->isOnWayToHome = true; //set as last action, since other functions might overwrite it
+}
+
+/**
+ * register a callback function to be called whenever a movement to home has been completed (does not trigger when movement passes by the home position)
+ */
+void ESP_FlexyStepper::registerHomeReachedCallback(callbackFunction newFunction)
+{
+  this->_homeReachedCallback = newFunction;
+}
+
+/**
+ * register a callback function to be called whenever a
+ */
+void ESP_FlexyStepper::registerLimitReachedCallback(callbackFunction limitSwitchTriggerdCallbackFunction)
+{
+  this->_limitTriggeredCallback = limitSwitchTriggerdCallbackFunction;
+}
+
+/**
+ * register a callback function to be called whenever a target position has been reached
+ */
+void ESP_FlexyStepper::registerTargetPositionReachedCallback(callbackFunction targetPositionReachedCallbackFunction)
+{
+  this->_targetPositionReachedCallback = targetPositionReachedCallbackFunction;
+}
+
+/**
+ * register a callback function to be called whenever a emergency stop is triggered 
+ */
+void ESP_FlexyStepper::registerEmergencyStopTriggeredCallback(callbackFunction emergencyStopTriggerdCallbackFunction)
+{
+  this->_emergencyStopTriggeredCallback = emergencyStopTriggerdCallbackFunction;
+}
+
+/**
+ * register a callback function to be called whenever the emergency stop switch is released
+ */
+void ESP_FlexyStepper::registerEmergencyStopReleasedCallback(callbackFunction emergencyStopReleasedCallbackFunction)
+{
+  this->_emergencyStopReleasedCallback = emergencyStopReleasedCallbackFunction;
+}
+
+/**
+ * start jogging (continous movement without a fixed target position)
+ * uses the currently set speed and acceleration settings
+ * to stop the motion call the stopJogging function.
+ * Will also stop when the external limit switch has been triggered using setLimitSwitchActive() or when the emergencyStop function is triggered
+ * Warning: This function requires either a limit switch to be configured otherwise or manual trigger of the stopJogging/setTargetPositionToStop or emergencyStop function, the motor will never stop jogging
+ */
+void ESP_FlexyStepper::startJogging(signed char direction)
+{
+  this->setTargetPositionInSteps(direction * 2000000000);
+}
+
+/**
+ * Stop jopgging, basically an alias function for setTargetPositionToStop()
+ */
+void ESP_FlexyStepper::stopJogging()
+{
+  this->setTargetPositionToStop();
 }
 
 //
@@ -681,6 +783,11 @@ bool ESP_FlexyStepper::moveToHomeInSteps(signed char directionTowardHome,
     //
     if (limitSwitchFlag == false)
       return (false);
+
+    if (this->_limitTriggeredCallback)
+    {
+      this->_limitTriggeredCallback();
+    }
   }
   delay(25);
 
@@ -791,6 +898,8 @@ void ESP_FlexyStepper::moveToPositionInSteps(long absolutePositionToMoveToInStep
 //
 void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInSteps)
 {
+  //abort potentially running homing movement
+  this->isOnWayToHome = false;
   targetPosition_InSteps = absolutePositionToMoveToInSteps;
 }
 
@@ -802,6 +911,9 @@ void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInS
 //
 void ESP_FlexyStepper::setTargetPositionToStop()
 {
+  //abort potentially running homing movement
+  this->isOnWayToHome = false;
+
   long decelerationDistance_InSteps;
 
   //
@@ -826,6 +938,9 @@ bool ESP_FlexyStepper::processMovement(void)
 {
   if (emergencyStopActive)
   {
+    //abort potentially running homing movement
+    this->isOnWayToHome = false;
+
     currentStepPeriod_InUS = 0.0;
     nextStepPeriod_InUS = 0.0;
     directionOfMotion = 0;
@@ -840,12 +955,15 @@ bool ESP_FlexyStepper::processMovement(void)
 
   long distanceToTarget_Signed;
 
+  //check if limit switch flag is active
   if (this->activeLimitSwitch != 0)
   {
     distanceToTarget_Signed = targetPosition_InSteps - currentPosition_InSteps;
+
     if (!this->limitSwitchCheckPeformed)
     {
       this->limitSwitchCheckPeformed = true;
+
       //a limit switch is active, so movement is only allowed in one direction (away from the switch)
       if (this->activeLimitSwitch == this->LIMIT_SWITCH_BEGIN)
       {
@@ -869,8 +987,20 @@ bool ESP_FlexyStepper::processMovement(void)
           this->disallowedDirection = -1;
         }
       }
+
+      //movement has been triggerd by goToLimitAndSetAsHome() function. so once the limit switch has been triggered we have reached the limit and need to set it as home
+      if (this->isOnWayToHome)
+      {
+        this->setCurrentPositionAsHomeAndStop(); //clear isOnWayToHome flag and stop motion
+        if (this->_homeReachedCallback)
+        {
+          this->_homeReachedCallback();
+        }
+        return true;
+      }
     }
 
+    //check if further movement is allowed
     if (
         (this->disallowedDirection == 1 && distanceToTarget_Signed > 0) ||
         (this->disallowedDirection == -1 && distanceToTarget_Signed < 0))
@@ -880,10 +1010,6 @@ bool ESP_FlexyStepper::processMovement(void)
       directionOfMotion = 0;
       targetPosition_InSteps = currentPosition_InSteps;
       return true;
-    }
-    else
-    {
-      //Serial.printf("current movement is in allowed direction %i (distance is %ld)\n", this->disallowedDirection, distanceToTarget_Signed);
     }
   }
 
@@ -960,6 +1086,13 @@ bool ESP_FlexyStepper::processMovement(void)
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
       this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
+
+      if (this->firstProcessingAfterTargetReached)
+      {
+        firstProcessingAfterTargetReached = false;
+        this->_targetPositionReachedCallback();
+      }
+
       return (true);
     }
   }
