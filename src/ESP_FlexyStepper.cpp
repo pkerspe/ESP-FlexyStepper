@@ -653,18 +653,25 @@ void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionFo
   {
     this->_homeReachedCallback = callbackFunctionForHome;
   }
-  if (this->activeLimitSwitch == 0)
+  if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome)
   {
     this->setTargetPositionInSteps(this->directionTowardsHome * 2000000000);
   }
-  else
-  {
-    if (this->_limitTriggeredCallback)
-    {
-      this->_limitTriggeredCallback();
-    }
-  }
   this->isOnWayToHome = true; //set as last action, since other functions might overwrite it
+}
+
+void ESP_FlexyStepper::goToLimit(signed char direction, callbackFunction callbackFunctionForLimit)
+{
+  if (callbackFunctionForLimit)
+  {
+    this->_callbackFunctionForGoToLimit = callbackFunctionForLimit;
+  }
+
+  if (this->activeLimitSwitch == 0)
+  {
+    this->setTargetPositionInSteps(direction * 2000000000);
+  }
+  this->isOnWayToLimit = true; //set as last action, since other functions might overwrite it
 }
 
 /**
@@ -900,6 +907,7 @@ void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInS
 {
   //abort potentially running homing movement
   this->isOnWayToHome = false;
+  this->isOnWayToLimit = false;
   targetPosition_InSteps = absolutePositionToMoveToInSteps;
 }
 
@@ -913,6 +921,7 @@ void ESP_FlexyStepper::setTargetPositionToStop()
 {
   //abort potentially running homing movement
   this->isOnWayToHome = false;
+  this->isOnWayToLimit = false;
 
   long decelerationDistance_InSteps;
 
@@ -940,6 +949,7 @@ bool ESP_FlexyStepper::processMovement(void)
   {
     //abort potentially running homing movement
     this->isOnWayToHome = false;
+    this->isOnWayToLimit = false;
 
     currentStepPeriod_InUS = 0.0;
     nextStepPeriod_InUS = 0.0;
@@ -1092,7 +1102,6 @@ bool ESP_FlexyStepper::processMovement(void)
         firstProcessingAfterTargetReached = false;
         this->_targetPositionReachedCallback();
       }
-
       return (true);
     }
   }

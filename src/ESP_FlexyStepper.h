@@ -100,6 +100,7 @@ public:
   void startJogging(signed char direction);
   void stopJogging();
   void goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome = NULL);
+  void goToLimit(signed char direction, callbackFunction callbackFunctionForLimit = NULL);
   
 
   void setCurrentPositionAsHomeAndStop(void);
@@ -135,6 +136,7 @@ private:
   callbackFunction _emergencyStopTriggeredCallback;
   callbackFunction _emergencyStopReleasedCallback;
   callbackFunction _targetPositionReachedCallback;
+  callbackFunction _callbackFunctionForGoToLimit;
 
   static void taskRunner(void *parameter);
 
@@ -165,6 +167,7 @@ private:
   //true if the current stepper positon equals the homing position
   bool isCurrentlyHomed;
   bool isOnWayToHome = false;
+  bool isOnWayToLimit = false;
   bool firstProcessingAfterTargetReached = true;
   signed char activeLimitSwitch;
   bool limitSwitchCheckPeformed;
