@@ -61,6 +61,7 @@
 //
 ESP_FlexyStepper::ESP_FlexyStepper()
 {
+  this->lastStepTime_InUS = 0;
   this->stepsPerRevolution = 200L;
   this->stepsPerMillimeter = 25.0;
   this->directionOfMotion = 0;
@@ -96,7 +97,7 @@ void ESP_FlexyStepper::startAsService(void)
 
 void ESP_FlexyStepper::taskRunner(void *parameter)
 {
-  ESP_FlexyStepper *stepperRef = (ESP_FlexyStepper *)parameter;
+  ESP_FlexyStepper *stepperRef = static_cast<ESP_FlexyStepper *>(parameter);
   for (;;)
   {
     stepperRef->processMovement();
@@ -173,9 +174,9 @@ void ESP_FlexyStepper::releaseEmergencyStop()
  */
 void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
 {
-  if (directionTowardHome == -1 && directionTowardHome == 0)
+  if (directionTowardHome == -1 || directionTowardHome == 1)
   {
-    this->directionTowardsHome = directionTowardsHome;
+    this->directionTowardsHome = directionTowardHome;
   }
 }
 
