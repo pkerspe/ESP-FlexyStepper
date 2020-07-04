@@ -54,6 +54,7 @@ class ESP_FlexyStepper
 {
 public:
   ESP_FlexyStepper();
+  ~ESP_FlexyStepper();
   //service functions
   void startAsService(void);
   void stopService(void);

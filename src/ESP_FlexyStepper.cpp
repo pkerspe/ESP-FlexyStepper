@@ -61,7 +61,7 @@
 //
 ESP_FlexyStepper::ESP_FlexyStepper()
 {
-  this->lastStepTime_InUS = 0;
+  this->lastStepTime_InUS = 0L;
   this->stepsPerRevolution = 200L;
   this->stepsPerMillimeter = 25.0;
   this->directionOfMotion = 0;
@@ -80,6 +80,14 @@ ESP_FlexyStepper::ESP_FlexyStepper()
   this->activeLimitSwitch = 0; //see LIMIT_SWITCH_BEGIN and LIMIT_SWITCH_END
   this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
   this->limitSwitchCheckPeformed = false;
+}
+
+ESP_FlexyStepper::~ESP_FlexyStepper()
+{
+  if (this->xHandle != NULL)
+  {
+    this->stopService();
+  }
 }
 
 //TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
