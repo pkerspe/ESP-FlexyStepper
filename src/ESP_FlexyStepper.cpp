@@ -81,6 +81,7 @@ ESP_FlexyStepper::ESP_FlexyStepper()
   this->limitSwitchCheckPeformed = false;
 }
 
+//TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 void ESP_FlexyStepper::startAsService(void)
 {
   disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper

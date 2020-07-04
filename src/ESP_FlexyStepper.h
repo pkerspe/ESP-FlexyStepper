@@ -36,6 +36,15 @@
 #ifndef ESP_FlexyStepper_h
 #define ESP_FlexyStepper_h
 
+#ifdef ESP32
+//
+//#elif defined(ESP8266)
+//
+#else
+#error Platform not supported, only ESP32 modules are currently supported
+#endif
+
+
 #include <Arduino.h>
 #include <stdlib.h>
 
