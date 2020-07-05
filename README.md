@@ -69,7 +69,8 @@ void loop()
   
   // Notice that you can now do whatever you want in the loop function without the need to call processMovement().
   // also you do not have to care if your loop processing times are too long. 
-}```
+}
+```
 
 ## Function overview
 
