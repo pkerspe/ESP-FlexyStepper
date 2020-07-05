@@ -87,27 +87,26 @@ void loop()
 | `void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond)` | |
 | `void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond)` | |
 | `float getCurrentPositionInMillimeters()` | get the current, absolute position in milimeters. Requires that the library has been configrued properly by using the `setStepsPerMillimeter(...)` function |
-| `void setCurrentPositionInMillimeters(float currentPositionInMillimeters)` | set |
-| `void setCurrentPositionInMillimeter(float currentPositionInMillimeter)` | |
-| `void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond)` | |
+| `void setCurrentPositionInMillimeters(float currentPositionInMillimeters)` | set the register for the current position to a specific value e.g. to mark the home position |
+| `void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond)` | set the speed for the next movements (or the current motion if any is in progress) in mm/s. Requires prior configuration of the library using `setStepsPerMillimeter()` |
 | `bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin)` | |
-| `void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond)` | |
-| `void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond)` | |
-| `void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond)` | |
-| `void setSpeedInStepsPerSecond(float speedInStepsPerSecond)` | |
-| `void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond)` | |
-| `void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond)` | |
-| `void moveRelativeInMillimeters(float distanceToMoveInMillimeters)` | |
+| `void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond)` | set the speed for the next movements (or the current motion if any is in progress) in revs/s. Requires prior configuration of the library using `setStepsPerRevolution()`|
+| `void setSpeedInStepsPerSecond(float speedInStepsPerSecond)` | set the speed for the next movements (or the current motion if any is in progress) in revs/s. Requires prior configuration of the library using `setStepsPerMilimeter()` |
+| `void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond)` | configure the acceleration in revs/second/second |
+| `void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond)` | configure the deceleration in revs/second/second |
+| `void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond)` | configure the acceleration in steps/second/second |
+| `void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond)` | configure the deceleration in steps/second/second |
+| `void moveRelativeInMillimeters(float distanceToMoveInMillimeters)` | *Blocking call:* start relative movement. This is a blocking function, it will not return before the final position has been reached. |
 | `void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters)` | |
-| `void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | |
+| `void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | *Blocking call:* start movement to absolute position in mm. This is a blocking function, it will not return before the final position has been reached. |
 | `void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | |
 | `long getDistanceToTargetSigned(void)` | |
 | `void setCurrentPositionInRevolutions(float currentPositionInRevolutions)` | |
 | `float getCurrentPositionInRevolutions()` | |
-| `bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin)` | |
-| `void moveRelativeInRevolutions(float distanceToMoveInRevolutions)` | |
+| `bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin)` | *Blocking call:* move to home position (max steps or until limit switch goes low. This is a blocking function, it will not return before the final position has been reached. |
+| `void moveRelativeInRevolutions(float distanceToMoveInRevolutions)` | *Blocking call:* start relative movement with given number of revolutions. This is a blocking function, it will not return before the final position has been reached. |
 | `void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions)` | |
-| `void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | |
+| `void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | *Blocking call:* start absolute movement in revolutions. This is a blocking function, it will not return before the final position has been reached. |
 | `void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | |
 | `float getCurrentVelocityInRevolutionsPerSecond()` | return the current velocity as floating point number in Revolutions/Second *Note: make sure you configured the stepper correctly using the `setStepsPerRevolution` function before calling this function, otherwise the result might be incorrect!*|
 | `float getCurrentVelocityInStepsPerSecond()` | return the current velocity as floating point number in Steps/Second |
