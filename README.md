@@ -97,17 +97,17 @@ void loop()
 | `void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond)` | configure the acceleration in steps/second/second |
 | `void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond)` | configure the deceleration in steps/second/second |
 | `void moveRelativeInMillimeters(float distanceToMoveInMillimeters)` | *Blocking call:* start relative movement. This is a blocking function, it will not return before the final position has been reached. |
-| `void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters)` | |
+| `void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters)` | set the target position to a relative value in mm from the current position. Requires the repeated call of processMovement() to sequentially update the stepper position or you need to start the ESP-FlexyStepper as as service using `startAsService()` and let the library to the rest for you. |
 | `void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | *Blocking call:* start movement to absolute position in mm. This is a blocking function, it will not return before the final position has been reached. |
-| `void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | |
-| `long getDistanceToTargetSigned(void)` | |
-| `void setCurrentPositionInRevolutions(float currentPositionInRevolutions)` | |
-| `float getCurrentPositionInRevolutions()` | |
+| `void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | set the target position to an absolute value in mm. Requires the repeated call of processMovement() to sequentially update the stepper position or you need to start the ESP-FlexyStepper as as service using `startAsService()` and let the library to the rest for you. |
+| `long getDistanceToTargetSigned(void)` | get the distance in steps to travel from the current position to the target position. If stepper has reached it's target position then 0 will be returned. This is a signed value, depending on the direction of the current movement |
+| `void setCurrentPositionInRevolutions(float currentPositionInRevolutions)` | set the current position inr revolutions (basically assign a value to the current position) |
+| `float getCurrentPositionInRevolutions()` | get the current, absolute position in revs |
 | `bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin)` | *Blocking call:* move to home position (max steps or until limit switch goes low. This is a blocking function, it will not return before the final position has been reached. |
 | `void moveRelativeInRevolutions(float distanceToMoveInRevolutions)` | *Blocking call:* start relative movement with given number of revolutions. This is a blocking function, it will not return before the final position has been reached. |
-| `void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions)` | |
+| `void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions)` | set the target position to a relative value in revolutions from the current position. Requires the repeated call of processMovement() to sequentially update the stepper position or you need to start the ESP-FlexyStepper as as service using `startAsService()` and let the library to the rest for you. |
 | `void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | *Blocking call:* start absolute movement in revolutions. This is a blocking function, it will not return before the final position has been reached. |
-| `void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | |
+| `void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | set the target position to an absolute value in revolutions from the current position. Requires the repeated call of processMovement() to sequentially update the stepper position or you need to start the ESP-FlexyStepper as as service using `startAsService()` and let the library to the rest for you. |
 | `float getCurrentVelocityInRevolutionsPerSecond()` | return the current velocity as floating point number in Revolutions/Second *Note: make sure you configured the stepper correctly using the `setStepsPerRevolution` function before calling this function, otherwise the result might be incorrect!*|
 | `float getCurrentVelocityInStepsPerSecond()` | return the current velocity as floating point number in Steps/Second |
 | `float getCurrentVelocityInMillimetersPerSecond(void)` | return the current velocity as floating point number in milimeters/Second. *Note: make sure you configured the stepper correctly using the `setStepsPerMillimeter` function before calling this function, otherwise the result might be incorrect!* |
