@@ -76,57 +76,55 @@ void loop()
 
 | Function | Desciption |
 | --- | --- |
-| ESP_FlexyStepper() | constructor for the class to create a new instance of the ESP-FlexyStepper |
-| void startAsService(void); | start ESP-FlexyStepper as a seprate task (service) in the background so it handles the calls to processMovement() for you in thebackground and you are free to do whatever you want in the main loop. *Should NOT be used in combination with the synchronous (blocking) function calls for movement* |
-| void stopService(void); | stop the ESP-FlexyStepper service. Only needed if startAsService() has been called before |
-| void connectToPins(byte stepPinNumber, byte directionPinNumber); | setup the pin numbers where the external stepper driver is connected to. Provide the IO Pins fro step (or pulse) pin and direction pin |
-| bool isStartedAsService(void); | |
-| long getTaskStackHighWaterMark(void); | |
-| void setStepsPerMillimeter(float motorStepPerMillimeter); | |
-| float getCurrentPositionInMillimeters(); | |
-| void setCurrentPositionInMillimeters(float currentPositionInMillimeters); | |
-| void setCurrentPositionInMillimeter(float currentPositionInMillimeter); | |
-| void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond); | |
-| void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond); | |
-| void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond); | |
-| bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin); | |
-| void moveRelativeInMillimeters(float distanceToMoveInMillimeters); | |
-| void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters); | |
-| void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters); | |
-| void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters); | |
-| float getCurrentVelocityInMillimetersPerSecond(void); | |
-| long getDistanceToTargetSigned(void); | |
-| void setStepsPerRevolution(float motorStepPerRevolution); | |
-| void setCurrentPositionInRevolutions(float currentPositionInRevolutions); | |
-| float getCurrentPositionInRevolutions(); | |
-| void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond); | |
-| void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond); | |
-| void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond); | |
-| bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin); | |
-| void moveRelativeInRevolutions(float distanceToMoveInRevolutions); | |
-| void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions); | |
-| void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions); | |
-| void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions); | |
-| float getCurrentVelocityInRevolutionsPerSecond(); | |
-| void setCurrentPositionInSteps(long currentPositionInSteps); | |
-| void setCurrentPositionAsHomeAndStop(void); | |
-| long getCurrentPositionInSteps(); | |
-| void setSpeedInStepsPerSecond(float speedInStepsPerSecond); | |
-| void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond); | |
-| void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond); | |
-| bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin); | |
-| void moveRelativeInSteps(long distanceToMoveInSteps); | |
-| void setTargetPositionRelativeInSteps(long distanceToMoveInSteps); | |
-| void moveToPositionInSteps(long absolutePositionToMoveToInSteps); | |
-| void setTargetPositionInSteps(long absolutePositionToMoveToInSteps); | |
-| void setTargetPositionToStop(); | |
-| void setDirectionToHome(signed char directionTowardHome); | configure the direction in which to move to reach the home switch |
-| void setLimitSwitchActive(byte limitSwitchType); | externally trigger a limit switch acitvation |
-| bool motionComplete(); | |
-| float getCurrentVelocityInStepsPerSecond(); | |
-| bool processMovement(void); | calculate when the next pulse needs to be send and control high/low state of the dir and pulse/step pin. *This function does not need to be called 
-a.) when you started the ESP-FlexyStepper as a service using the startAsService() function, 
-b.) when you called one of the blocking/synchronous movving functions* |
-| int getDirectionOfMotion(void); | get the direction of the current movement. 0 if stepper not moving at the moment, 1 or -1 if the stepper is in motion |
-| bool isMovingTowardsHome(void); | true if the stepper is still on the way to the home position |
-| static void taskRunner(void *parameter); | this is the function that is used as the service, you do not need to call this manually ever |
+| `ESP_FlexyStepper()` | constructor for the class to create a new instance of the ESP-FlexyStepper |
+| `void startAsService()` | start ESP-FlexyStepper as a seprate task (service) in the background so it handles the calls to processMovement() for you in thebackground and you are free to do whatever you want in the main loop. *Should NOT be used in combination with the synchronous (blocking) function calls for movement* |
+| `void stopService()` | stop the ESP-FlexyStepper service. Only needed if startAsService() has been called before |
+| `void connectToPins(byte stepPinNumber, byte directionPinNumber)` | setup the pin numbers where the external stepper driver is connected to. Provide the IO Pins fro step (or pulse) pin and direction pin |
+| `bool isStartedAsService()` | returns true if the ESP-FlexyStepper service has been started/is running, false if not |
+| `void setStepsPerMillimeter(float motorStepPerMillimeter)` | Configure the amount of steps (pulses) to the stepper driver that are needed to peform a movement of 1 mm |
+| `void setStepsPerRevolution(float motorStepPerRevolution)` | Configure the amount of steps (pulses) to the stepper driver that are needed to peform a full rotation of the stepper motor |
+| `void setDirectionToHome(signed char directionTowardHome)` | configure the direction in which to move to reach the home switch |
+| `void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond)` | |
+| `void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond)` | |
+| `float getCurrentPositionInMillimeters()` | get the current, absolute position in milimeters. Requires that the library has been configrued properly by using the `setStepsPerMillimeter(...)` function |
+| `void setCurrentPositionInMillimeters(float currentPositionInMillimeters)` | set |
+| `void setCurrentPositionInMillimeter(float currentPositionInMillimeter)` | |
+| `void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond)` | |
+| `bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin)` | |
+| `void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond)` | |
+| `void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond)` | |
+| `void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond)` | |
+| `void setSpeedInStepsPerSecond(float speedInStepsPerSecond)` | |
+| `void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond)` | |
+| `void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond)` | |
+| `void moveRelativeInMillimeters(float distanceToMoveInMillimeters)` | |
+| `void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters)` | |
+| `void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | |
+| `void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters)` | |
+| `long getDistanceToTargetSigned(void)` | |
+| `void setCurrentPositionInRevolutions(float currentPositionInRevolutions)` | |
+| `float getCurrentPositionInRevolutions()` | |
+| `bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin)` | |
+| `void moveRelativeInRevolutions(float distanceToMoveInRevolutions)` | |
+| `void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions)` | |
+| `void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | |
+| `void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions)` | |
+| `float getCurrentVelocityInRevolutionsPerSecond()` | return the current velocity as floating point number in Revolutions/Second *Note: make sure you configured the stepper correctly using the `setStepsPerRevolution` function before calling this function, otherwise the result might be incorrect!*|
+| `float getCurrentVelocityInStepsPerSecond()` | return the current velocity as floating point number in Steps/Second |
+| `float getCurrentVelocityInMillimetersPerSecond(void)` | return the current velocity as floating point number in milimeters/Second. *Note: make sure you configured the stepper correctly using the `setStepsPerMillimeter` function before calling this function, otherwise the result might be incorrect!* |
+| `void setCurrentPositionInSteps(long currentPositionInSteps)` |  |
+| `void setCurrentPositionAsHomeAndStop(void)` | set the current position of the stepper as the home position. This also sets the current position to 0. After peforming this step you can always return to the home position by calling `setTargetPoisitionInSteps(0)`(or for blocking calls `moveToPositionInSteps(0)`) |
+| `long getCurrentPositionInSteps()` | return the current position of the stepper in steps (absolute value, could also be negative if no proper homing has been performed before) |
+| `bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin)` | *Blocking call:* start movement in the given direction with a maximum number of steps or until the IO Pin defined by homeSwitchPin is going low (active low switch is required, since the library will configure this pin as input with internal pullup in the current version). This is a blocking function, it will not return before the final position has been reached.|
+| `void moveRelativeInSteps(long distanceToMoveInSteps)` | *Blocking call:* start movement to the given relative position from current position. This is a blocking function, it will not return before the final position has been reached. |
+| `void setTargetPositionRelativeInSteps(long distanceToMoveInSteps)` | set a new, relative target position for the stepper in a non blocking way. Requires the repeated call of processMovement() to sequentially update the stepper position or you need to start the ESP-FlexyStepper as as service using `startAsService()` and let the library to the rest for you.|
+| `void moveToPositionInSteps(long absolutePositionToMoveToInSteps)` | *Blocking call:* start movement to the given absolute position in steps. This is a blocking function, it will not return before the final position has been reached. |
+| `void setTargetPositionInSteps(long absolutePositionToMoveToInSteps)` | set a new absolute target position in steps to move to |
+| `void setTargetPositionToStop()` | start decelerating from the current position. Used to stop the current motion without peforming a hard stop. Does nothing if the target position has already been reached and the stepper has come to a stop |
+| `void setLimitSwitchActive(byte limitSwitchType)` | externally trigger a limit switch acitvation |
+| `bool motionComplete()` | returns true if the target position has been reached and the motion stopped, false if the stepper is still moving |
+| `bool processMovement(void)` | calculate when the next pulse needs to be send and control high/low state of the dir and pulse/step pin. *This function does not need to be called a.) when you started the ESP-FlexyStepper as a service using the startAsService() function, b.) when you called one of the blocking/synchronous movving functions* |
+| `int getDirectionOfMotion(void)` | get the direction of the current movement. 0 if stepper not moving at the moment, 1 or -1 if the stepper is in motion |
+| `bool isMovingTowardsHome(void)` | true if the stepper is still on the way to the home position |
+| `static void taskRunner(void *parameter)` | this is the function that is used as the service, you do not need to call this manually ever |
+| `getTaskStackHighWaterMark(void)` | this is used for debugging to see if the allocated stack trace of the task / service function is large enough. You can ignore this function |
