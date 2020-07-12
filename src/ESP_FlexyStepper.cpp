@@ -1012,10 +1012,12 @@ bool ESP_FlexyStepper::processMovement(void)
       if (this->isOnWayToHome)
       {
         this->setCurrentPositionAsHomeAndStop(); //clear isOnWayToHome flag and stop motion
-        if (this->_homeReachedCallback)
+        
+        if (this->_homeReachedCallback != NULL)
         {
           this->_homeReachedCallback();
         }
+        
         return true;
       }
     }
@@ -1110,7 +1112,10 @@ bool ESP_FlexyStepper::processMovement(void)
       if (this->firstProcessingAfterTargetReached)
       {
         firstProcessingAfterTargetReached = false;
-        this->_targetPositionReachedCallback();
+        if (this->_targetPositionReachedCallback)
+        {
+          this->_targetPositionReachedCallback();
+        }
       }
       return (true);
     }

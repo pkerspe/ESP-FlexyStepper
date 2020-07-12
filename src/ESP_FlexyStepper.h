@@ -141,12 +141,12 @@ public:
   static const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
 
 private:
-  callbackFunction _homeReachedCallback;
-  callbackFunction _limitTriggeredCallback;
-  callbackFunction _emergencyStopTriggeredCallback;
-  callbackFunction _emergencyStopReleasedCallback;
-  callbackFunction _targetPositionReachedCallback;
-  callbackFunction _callbackFunctionForGoToLimit;
+  callbackFunction _homeReachedCallback = NULL;
+  callbackFunction _limitTriggeredCallback = NULL;
+  callbackFunction _emergencyStopTriggeredCallback = NULL;
+  callbackFunction _emergencyStopReleasedCallback = NULL;
+  callbackFunction _targetPositionReachedCallback = NULL;
+  callbackFunction _callbackFunctionForGoToLimit = NULL;
 
   static void taskRunner(void *parameter);
 
