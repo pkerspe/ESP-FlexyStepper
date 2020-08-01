@@ -253,6 +253,62 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
   digitalWrite(directionPin, LOW);
 }
 
+/*
+* setup an IO pin to trigger an external brake for the motor.
+* This is an optional step, set to -1 to disable this function (which is default)
+* the active state parameter defines if the external brake is configured in an active high (pin goes high to enable the brake) or active low (pin goes low to activate the brake) setup.
+* active high = 1, active low = 2
+* Will be set to ative high by default or if an invalid value is given
+*/
+void ESP_FlexyStepper::setBrakePin(byte brakePin, byte activeState)
+{
+  this->brakePin = brakePin;
+  if (activeState == ESP_FlexyStepper::ACTIVE_HIGH || activeState == ESP_FlexyStepper::ACTIVE_LOW)
+  {
+    this->brakePinActiveState = activeState;
+  }
+  else
+  {
+    this->brakePinActiveState = ESP_FlexyStepper::ACTIVE_HIGH;
+  }
+
+  if (this->brakePin >= 0)
+  {
+    // configure the IO pins
+    pinMode(this->brakePin, OUTPUT);
+    this->deactivateBrake();
+  }
+}
+
+/**
+ * activate (engage) the motor brake (if any is configured, otherwise will do nothing) 
+ */
+void ESP_FlexyStepper::activateBrake()
+{
+  if (this->brakePin >= 0)
+  {
+    digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
+    this->_isBrakeActive = true;
+  }
+}
+
+/**
+ * deactivate (release) the motor brake (if any is configured, otherwise will do nothing) 
+ */
+void ESP_FlexyStepper::deactivateBrake()
+{
+  if (this->brakePin >= 0)
+  {
+    digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 0 : 1);
+    this->_isBrakeActive = false;
+  }
+}
+
+bool ESP_FlexyStepper::isBakeActive()
+{
+  return this->_isBrakeActive;
+}
+
 // ---------------------------------------------------------------------------------
 //                     Public functions with units in millimeters
 // ---------------------------------------------------------------------------------
@@ -966,6 +1022,12 @@ bool ESP_FlexyStepper::processMovement(void)
     directionOfMotion = 0;
     targetPosition_InSteps = currentPosition_InSteps;
 
+    //activate brake if configured and not active already
+    if (!this->_isBrakeActive)
+    {
+      this->activateBrake();
+    }
+
     if (!this->holdEmergencyStopUntilExplicitRelease)
     {
       emergencyStopActive = false;
@@ -1012,12 +1074,16 @@ bool ESP_FlexyStepper::processMovement(void)
       if (this->isOnWayToHome)
       {
         this->setCurrentPositionAsHomeAndStop(); //clear isOnWayToHome flag and stop motion
-        
+
         if (this->_homeReachedCallback != NULL)
         {
           this->_homeReachedCallback();
         }
-        
+        //activate brake since we reached the final position
+        if (!this->_isBrakeActive)
+        {
+          this->activateBrake();
+        }
         return true;
       }
     }
@@ -1031,6 +1097,11 @@ bool ESP_FlexyStepper::processMovement(void)
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
       targetPosition_InSteps = currentPosition_InSteps;
+      //activate brake since we reached the final position
+      if (!this->_isBrakeActive)
+      {
+        this->activateBrake();
+      }
       return true;
     }
   }
@@ -1065,10 +1136,14 @@ bool ESP_FlexyStepper::processMovement(void)
       lastStepDirectionBeforeLimitSwitchTrigger = directionOfMotion;
       return (false);
     }
-
     else
     {
       this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
+      //activate brake since we reached the final position
+      if (!this->_isBrakeActive)
+      {
+        this->activateBrake();
+      }
       return (true);
     }
   }
@@ -1080,6 +1155,12 @@ bool ESP_FlexyStepper::processMovement(void)
   // if it is not time for the next step, return
   if (periodSinceLastStep_InUS < (unsigned long)nextStepPeriod_InUS)
     return (false);
+
+  //deactivate brake if configured and active
+  if (this->_isBrakeActive)
+  {
+    this->deactivateBrake();
+  }
 
   // execute the step on the rising edge
   digitalWrite(stepPin, HIGH);
@@ -1115,6 +1196,11 @@ bool ESP_FlexyStepper::processMovement(void)
         if (this->_targetPositionReachedCallback)
         {
           this->_targetPositionReachedCallback();
+        }
+        //activate brake since we reached the final position
+        if (!this->_isBrakeActive)
+        {
+          this->activateBrake();
         }
       }
       return (true);

@@ -62,6 +62,7 @@ public:
 
   //IO setup and helper / debugging functions
   void connectToPins(byte stepPinNumber, byte directionPinNumber);
+  void setBrakePin(byte brakePin, byte activeState = 1);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
   bool motionComplete();
@@ -69,6 +70,9 @@ public:
   bool isMovingTowardsHome(void);
   void emergencyStop(bool holdUntilReleased = false);
   void releaseEmergencyStop(void);
+  void activateBrake(void);
+  void deactivateBrake(void);
+  bool isBakeActive(void);
   //the central function to calculate the next movment step signal
   bool processMovement(void);
 
@@ -139,6 +143,8 @@ public:
   static const byte LIMIT_SWITCH_BEGIN = -1;
   static const byte LIMIT_SWITCH_END = 1;
   static const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
+  static const byte ACTIVE_HIGH = 1;
+  static const byte ACTIVE_LOW = 2;
 
 private:
   callbackFunction _homeReachedCallback = NULL;
@@ -153,7 +159,10 @@ private:
   void DeterminePeriodOfNextStep();
 
   byte stepPin;
+  byte brakePin;
+  byte brakePinActiveState = ACTIVE_HIGH;
   byte directionPin;
+  bool _isBrakeActive = false;
   float stepsPerMillimeter;
   float stepsPerRevolution;
   int directionOfMotion;
