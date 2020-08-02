@@ -62,7 +62,7 @@ public:
 
   //IO setup and helper / debugging functions
   void connectToPins(byte stepPinNumber, byte directionPinNumber);
-  void setBrakePin(byte brakePin, byte activeState = 1);
+  void setBrakePin(byte brakePin, byte activeState = ESP_FlexyStepper::ACTIVE_HIGH);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
   bool motionComplete();
@@ -97,6 +97,9 @@ public:
   void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
   void setDirectionToHome(signed char directionTowardHome);
   void setLimitSwitchActive(byte limitSwitchType);
+
+  void setBrakeEngageDelayMs(unsigned long);
+  void setBrakeReleaseDelayMs(signed long);
 
   float getCurrentVelocityInStepsPerSecond();
   float getCurrentVelocityInRevolutionsPerSecond();
@@ -157,10 +160,18 @@ private:
   static void taskRunner(void *parameter);
 
   void DeterminePeriodOfNextStep();
+  void triggerBrakeIfNeededOrSetTimeout(void);
 
   byte stepPin;
-  byte brakePin;
+  byte brakePin = -1;
   byte brakePinActiveState = ACTIVE_HIGH;
+  unsigned long _brakeEngageDelayMs = 0;
+  signed long _brakeReleaseDelayMs = -1;
+  unsigned long _timeToEngangeBrake = LONG_MAX;
+  unsigned long _timeToReleaseBrake = LONG_MAX;
+  bool _isBrakeConfigured = false;
+  bool _hasMovementOccuredSinceLastBrakeRelease = true;
+
   byte directionPin;
   bool _isBrakeActive = false;
   float stepsPerMillimeter;

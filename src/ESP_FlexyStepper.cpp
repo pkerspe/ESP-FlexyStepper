@@ -277,6 +277,38 @@ void ESP_FlexyStepper::setBrakePin(byte brakePin, byte activeState)
     // configure the IO pins
     pinMode(this->brakePin, OUTPUT);
     this->deactivateBrake();
+    _isBrakeConfigured = true;
+  }
+  else
+  {
+    _isBrakeConfigured = false;
+  }
+}
+
+/**
+ * set a delay in milliseconds between stopping the stepper motor and engaging the pyhsical brake (trigger the eternal pin configured via setBrakePin() ).
+ * Default is 0, resulting in immediate triggering of the motor brake once the motor stops moving.
+ * This value does NOT affect the triggering of the brake in cade of an emergency stop. In this case the brake will always get triggered without delay
+ */
+void ESP_FlexyStepper::setBrakeEngageDelayMs(unsigned long delay)
+{
+  this->_brakeEngageDelayMs = delay;
+}
+
+/**
+ * set a timeout in milliseconds fter which the brake shall be released once triggered and no motion is performed by the stpper motor.
+ * By default the value is -1 indicating, that the brake shall never be automatically released, as long as the stepper motor is not moving to a new position.
+ * Value must be larger than 1 (Even though 1ms delay does probably not make any sense since physical brakes have a delay that is most likely higher than that just to engange)
+ */
+void ESP_FlexyStepper::setBrakeReleaseDelayMs(signed long delay)
+{
+  if (delay < 0)
+  {
+    this->_brakeReleaseDelayMs = -1;
+  }
+  else
+  {
+    this->_brakeReleaseDelayMs = delay;
   }
 }
 
@@ -285,10 +317,11 @@ void ESP_FlexyStepper::setBrakePin(byte brakePin, byte activeState)
  */
 void ESP_FlexyStepper::activateBrake()
 {
-  if (this->brakePin >= 0)
+  if (this->_isBrakeConfigured)
   {
     digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
     this->_isBrakeActive = true;
+    this->_timeToEngangeBrake = LONG_MAX;
   }
 }
 
@@ -297,10 +330,12 @@ void ESP_FlexyStepper::activateBrake()
  */
 void ESP_FlexyStepper::deactivateBrake()
 {
-  if (this->brakePin >= 0)
+  if (this->_isBrakeConfigured)
   {
     digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 0 : 1);
     this->_isBrakeActive = false;
+    this->_timeToReleaseBrake = LONG_MAX;
+    this->_hasMovementOccuredSinceLastBrakeRelease = false;
   }
 }
 
@@ -975,6 +1010,7 @@ void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInS
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
   targetPosition_InSteps = absolutePositionToMoveToInSteps;
+  this->firstProcessingAfterTargetReached = true;
 }
 
 //
@@ -1022,8 +1058,8 @@ bool ESP_FlexyStepper::processMovement(void)
     directionOfMotion = 0;
     targetPosition_InSteps = currentPosition_InSteps;
 
-    //activate brake if configured and not active already
-    if (!this->_isBrakeActive)
+    //activate brake (if configured) driectly due to emergency stop if not already active
+    if (this->_isBrakeConfigured && !this->_isBrakeActive)
     {
       this->activateBrake();
     }
@@ -1033,6 +1069,16 @@ bool ESP_FlexyStepper::processMovement(void)
       emergencyStopActive = false;
     }
     return (true);
+  }
+
+  //check if delayed brake shall be engaged / released
+  if (this->_timeToEngangeBrake != LONG_MAX && this->_timeToEngangeBrake <= millis())
+  {
+    this->activateBrake();
+  }
+  else if (this->_timeToReleaseBrake != LONG_MAX && this->_timeToReleaseBrake <= millis())
+  {
+    this->deactivateBrake();
   }
 
   long distanceToTarget_Signed;
@@ -1079,10 +1125,10 @@ bool ESP_FlexyStepper::processMovement(void)
         {
           this->_homeReachedCallback();
         }
-        //activate brake since we reached the final position
-        if (!this->_isBrakeActive)
+        //activate brake (or schedule activation) since we reached the final position
+        if (this->_isBrakeConfigured && !this->_isBrakeActive)
         {
-          this->activateBrake();
+          this->triggerBrakeIfNeededOrSetTimeout();
         }
         return true;
       }
@@ -1093,14 +1139,15 @@ bool ESP_FlexyStepper::processMovement(void)
         (this->disallowedDirection == 1 && distanceToTarget_Signed > 0) ||
         (this->disallowedDirection == -1 && distanceToTarget_Signed < 0))
     {
+      //limit switch is acitve and movement in request direction is not allowed
       currentStepPeriod_InUS = 0.0;
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
       targetPosition_InSteps = currentPosition_InSteps;
-      //activate brake since we reached the final position
-      if (!this->_isBrakeActive)
+      //activate brake (or schedule activation) since limit is active for requested direction
+      if (this->_isBrakeConfigured && !this->_isBrakeActive)
       {
-        this->activateBrake();
+        this->triggerBrakeIfNeededOrSetTimeout();
       }
       return true;
     }
@@ -1139,10 +1186,10 @@ bool ESP_FlexyStepper::processMovement(void)
     else
     {
       this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
-      //activate brake since we reached the final position
-      if (!this->_isBrakeActive)
+      //activate brake since motor is stopped
+      if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_hasMovementOccuredSinceLastBrakeRelease)
       {
-        this->activateBrake();
+        this->triggerBrakeIfNeededOrSetTimeout();
       }
       return (true);
     }
@@ -1156,8 +1203,8 @@ bool ESP_FlexyStepper::processMovement(void)
   if (periodSinceLastStep_InUS < (unsigned long)nextStepPeriod_InUS)
     return (false);
 
-  //deactivate brake if configured and active
-  if (this->_isBrakeActive)
+  //we have to move, so deactivate brake (if configured at all) immediately
+  if (this->_isBrakeConfigured && this->_isBrakeActive)
   {
     this->deactivateBrake();
   }
@@ -1177,6 +1224,8 @@ bool ESP_FlexyStepper::processMovement(void)
 
   // return the step line low
   digitalWrite(stepPin, LOW);
+
+  this->_hasMovementOccuredSinceLastBrakeRelease = true;
 
   // check if the move has reached its final target position, return true if all
   // done
@@ -1198,15 +1247,39 @@ bool ESP_FlexyStepper::processMovement(void)
           this->_targetPositionReachedCallback();
         }
         //activate brake since we reached the final position
-        if (!this->_isBrakeActive)
+        if (this->_isBrakeConfigured && !this->_isBrakeActive)
         {
-          this->activateBrake();
+          this->triggerBrakeIfNeededOrSetTimeout();
         }
       }
       return (true);
     }
   }
   return (false);
+}
+
+/**
+ * internal helper to determine if brake shall be acitvated (if configured at all) or if a delay needs to be set
+ */
+void ESP_FlexyStepper::triggerBrakeIfNeededOrSetTimeout()
+{
+  //check if break is already set or a timeout has already beend set
+  if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_timeToEngangeBrake == LONG_MAX)
+  {
+    if (this->_brakeReleaseDelayMs > 0 && this->_hasMovementOccuredSinceLastBrakeRelease)
+    {
+      this->_timeToReleaseBrake = millis() + this->_brakeReleaseDelayMs;
+    }
+
+    if (this->_brakeEngageDelayMs == 0)
+    {
+      this->activateBrake();
+    }
+    else
+    {
+      this->_timeToEngangeBrake = millis() + this->_brakeEngageDelayMs;
+    }
+  }
 }
 
 // Get the current velocity of the motor in steps/second.  This functions is
