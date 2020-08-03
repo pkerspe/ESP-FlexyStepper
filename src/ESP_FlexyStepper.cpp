@@ -1025,7 +1025,7 @@ void ESP_FlexyStepper::setTargetPositionToStop()
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
 
-in setTargetPositionToStop  if(directionOfMotion == 0){
+  if(directionOfMotion == 0){
     return;
   }
 
