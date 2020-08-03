@@ -1025,6 +1025,10 @@ void ESP_FlexyStepper::setTargetPositionToStop()
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
 
+in setTargetPositionToStop  if(directionOfMotion == 0){
+    return;
+  }
+
   long decelerationDistance_InSteps;
 
   //
