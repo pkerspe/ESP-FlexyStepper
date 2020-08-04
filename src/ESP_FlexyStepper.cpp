@@ -794,7 +794,7 @@ void ESP_FlexyStepper::registerLimitReachedCallback(callbackFunction limitSwitch
 /**
  * register a callback function to be called whenever a target position has been reached
  */
-void ESP_FlexyStepper::registerTargetPositionReachedCallback(callbackFunction targetPositionReachedCallbackFunction)
+void ESP_FlexyStepper::registerTargetPositionReachedCallback(positionCallbackFunction targetPositionReachedCallbackFunction)
 {
   this->_targetPositionReachedCallback = targetPositionReachedCallbackFunction;
 }
@@ -1248,7 +1248,7 @@ bool ESP_FlexyStepper::processMovement(void)
         firstProcessingAfterTargetReached = false;
         if (this->_targetPositionReachedCallback)
         {
-          this->_targetPositionReachedCallback();
+          this->_targetPositionReachedCallback(currentPosition_InSteps);
         }
         //activate brake since we reached the final position
         if (this->_isBrakeConfigured && !this->_isBrakeActive)

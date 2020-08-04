@@ -49,6 +49,7 @@
 #include <stdlib.h>
 
 typedef void (*callbackFunction)(void);
+typedef void (*positionCallbackFunction)(long);
 
 class ESP_FlexyStepper
 {
@@ -79,7 +80,7 @@ public:
   //register function for callbacks
   void registerHomeReachedCallback(callbackFunction homeReachedCallbackFunction);
   void registerLimitReachedCallback(callbackFunction limitSwitchTriggerdCallbackFunction);
-  void registerTargetPositionReachedCallback(callbackFunction targetPositionReachedCallbackFunction);
+  void registerTargetPositionReachedCallback(positionCallbackFunction targetPositionReachedCallbackFunction);
   void registerEmergencyStopTriggeredCallback(callbackFunction emergencyStopTriggerdCallbackFunction);
   void registerEmergencyStopReleasedCallback(callbackFunction emergencyStopReleasedCallbackFunction);
 
@@ -154,7 +155,7 @@ private:
   callbackFunction _limitTriggeredCallback = NULL;
   callbackFunction _emergencyStopTriggeredCallback = NULL;
   callbackFunction _emergencyStopReleasedCallback = NULL;
-  callbackFunction _targetPositionReachedCallback = NULL;
+  positionCallbackFunction _targetPositionReachedCallback = NULL;
   callbackFunction _callbackFunctionForGoToLimit = NULL;
 
   static void taskRunner(void *parameter);
