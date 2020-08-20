@@ -132,6 +132,10 @@ public:
   void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
   void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
 
+  long getTargetPositionInSteps();
+  float getTargetPositionInMillimeters();
+  float getTargetPositionInRevolutions();
+
   //blocking function calls
   void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
   void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);

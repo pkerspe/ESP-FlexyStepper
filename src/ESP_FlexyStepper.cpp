@@ -490,6 +490,11 @@ void ESP_FlexyStepper::setTargetPositionInMillimeters(
                                        stepsPerMillimeter));
 }
 
+float ESP_FlexyStepper::getTargetPositionInMillimeters()
+{
+	return getTargetPositionInSteps() / stepsPerMillimeter;
+}
+
 //
 // Get the current velocity of the motor in millimeters/second.  This functions is
 // updated while it accelerates up and down in speed.  This is not the desired
@@ -649,6 +654,11 @@ void ESP_FlexyStepper::setTargetPositionInRevolutions(
 {
   setTargetPositionInSteps((long)round(absolutePositionToMoveToInRevolutions *
                                        stepsPerRevolution));
+}
+
+float ESP_FlexyStepper::getTargetPositionInRevolutions()
+{
+	return getTargetPositionInSteps() / stepsPerRevolution;
 }
 
 //
@@ -1011,6 +1021,11 @@ void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInS
   this->isOnWayToLimit = false;
   targetPosition_InSteps = absolutePositionToMoveToInSteps;
   this->firstProcessingAfterTargetReached = true;
+}
+
+long ESP_FlexyStepper::getTargetPositionInSteps()
+{
+	return targetPosition_InSteps;
 }
 
 //
