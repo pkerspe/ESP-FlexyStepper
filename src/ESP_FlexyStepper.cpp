@@ -248,8 +248,10 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
   // configure the IO pins
   pinMode(stepPin, OUTPUT);
   digitalWrite(stepPin, LOW);
-
-  pinMode(directionPin, OUTPUT);
+  
+  if(directionPin<255){
+	pinMode(directionPin, OUTPUT);
+	}
   digitalWrite(directionPin, LOW);
 }
 
