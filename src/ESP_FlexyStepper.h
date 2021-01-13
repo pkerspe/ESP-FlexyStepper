@@ -57,7 +57,7 @@ public:
   ESP_FlexyStepper();
   ~ESP_FlexyStepper();
   //service functions
-  void startAsService(void);
+  void startAsService(bool core=0);
   void stopService(void);
   bool isStartedAsService(void);
 
