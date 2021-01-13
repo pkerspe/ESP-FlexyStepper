@@ -51,6 +51,8 @@
 typedef void (*callbackFunction)(void);
 typedef void (*positionCallbackFunction)(long);
 
+static bool core_0_wdt_was_disabled_from_flexyStepper = 0;
+
 class ESP_FlexyStepper
 {
 public:

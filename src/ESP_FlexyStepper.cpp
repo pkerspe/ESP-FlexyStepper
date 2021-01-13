@@ -93,10 +93,9 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 //TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 void ESP_FlexyStepper::startAsService(bool core)
 {
-  if(core){
-disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
-  }else{
+ if(!core_0_wdt_was_disabled_from_flexyStepper){
 disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+core_0_wdt_was_disabled_from_flexyStepper=1;
   }
   
   xTaskCreatePinnedToCore(
