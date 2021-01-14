@@ -62,7 +62,7 @@ public:
   bool isStartedAsService(void);
 
   //IO setup and helper / debugging functions
-  void connectToPins(byte stepPinNumber, byte directionPinNumber);
+  void connectToPins(byte stepPinNumber, byte directionPinNumber=255);
   void setBrakePin(byte brakePin, byte activeState = ESP_FlexyStepper::ACTIVE_HIGH);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
