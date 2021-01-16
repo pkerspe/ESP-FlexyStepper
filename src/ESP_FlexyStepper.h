@@ -51,13 +51,15 @@
 typedef void (*callbackFunction)(void);
 typedef void (*positionCallbackFunction)(long);
 
+static bool core_0_wdt_was_disabled_from_flexyStepper = 0;
+
 class ESP_FlexyStepper
 {
 public:
   ESP_FlexyStepper();
   ~ESP_FlexyStepper();
   //service functions
-  void startAsService(void);
+  void startAsService(int core= (-1) ); //If the user does not specify the desired kernel as a parameter, then the free one will be selected
   void stopService(void);
   bool isStartedAsService(void);
 
