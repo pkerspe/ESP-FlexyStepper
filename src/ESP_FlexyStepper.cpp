@@ -93,19 +93,21 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 //TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 void ESP_FlexyStepper::startAsService(int core)
 {
- if(!core_0_wdt_was_disabled_from_flexyStepper){
+
+ if ( (!core_0_wdt_was_disabled_from_flexyStepper) && (core!=1) ) //If WDT has not been disabled previously and core 1 is not selected
+  {
 disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
-core_0_wdt_was_disabled_from_flexyStepper=1;
+core_0_wdt_was_disabled_from_flexyStepper=1; //Let's indicate that we have disabled WDT for kernel 0
   }
   
-  xTaskCreateUniversal(
+  xTaskCreateUniversal(             //This type of task is specially adapted to work with single and dual core versions of ESP32
       ESP_FlexyStepper::taskRunner, /* Task function. */
       "FlexyStepper",               /* String with name of task (by default max 16 characters long) */
       2000,                         /* Stack size in bytes. */
       this,                         /* Parameter passed as input of the task */
       1,                            /* Priority of the task, 1 seems to work just fine for us */
-      &this->xHandle,              /* Task handle. */
-      core);                      /* Ядро, на котором будет выполняться задача */
+      &this->xHandle,               /* Task handle. */
+      core);                        /* The core on which our task will be executed*/
 }
 
 void ESP_FlexyStepper::taskRunner(void *parameter)

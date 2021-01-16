@@ -59,7 +59,7 @@ public:
   ESP_FlexyStepper();
   ~ESP_FlexyStepper();
   //service functions
-  void startAsService(int core= (-1) );
+  void startAsService(int core= (-1) ); //If the user does not specify the desired kernel as a parameter, then the free one will be selected
   void stopService(void);
   bool isStartedAsService(void);
 
