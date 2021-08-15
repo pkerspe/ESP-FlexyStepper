@@ -117,7 +117,7 @@ public:
 
   void startJogging(signed char direction);
   void stopJogging();
-  void goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome = NULL);
+  void goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome = NULL, long maxDistanceToMoveInSteps = 2000000000L);
   void goToLimit(signed char direction, callbackFunction callbackFunctionForLimit = NULL);
   
 
@@ -204,6 +204,7 @@ private:
   bool isOnWayToHome = false;
   bool isOnWayToLimit = false;
   bool firstProcessingAfterTargetReached = true;
+  //The type ID of the limit switch type that is active. possible values are LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) or LIMIT_SWITCH_COMBINED_BEGIN_AND_END (2) or 0 if no limit switch is active
   signed char activeLimitSwitch;
   bool limitSwitchCheckPeformed;
   // 0 if the the stepper is allowed to move in both directions (e.g. no limit or homing switch triggered), otherwise indicated which direction is currently not allowed for further movement

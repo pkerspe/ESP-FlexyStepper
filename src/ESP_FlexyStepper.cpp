@@ -93,14 +93,16 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 //TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 void ESP_FlexyStepper::startAsService(void)
 {
-  disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
-  xTaskCreate(
+  disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  xTaskCreatePinnedToCore(
       ESP_FlexyStepper::taskRunner, /* Task function. */
       "FlexyStepper",               /* String with name of task (by default max 16 characters long) */
       2000,                         /* Stack size in bytes. */
       this,                         /* Parameter passed as input of the task */
       1,                            /* Priority of the task, 1 seems to work just fine for us */
-      &this->xHandle);              /* Task handle. */
+      &this->xHandle,               /* Task handle. */
+      1 /* the cpu core to use */
+  );
 }
 
 void ESP_FlexyStepper::taskRunner(void *parameter)
@@ -190,7 +192,7 @@ void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
 
 /**
  * Notification of an externaly detected limit switch activation
- * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END as parameter values to indicate 
+ * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) as parameter values to indicate 
  * whether the limit switch near the begin (direction of home position) or at the end of the movement has ben triggered.
  * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and retriggering the limit switch function
  */
@@ -202,7 +204,7 @@ void ESP_FlexyStepper::setLimitSwitchActive(byte limitSwitchType)
     this->limitSwitchCheckPeformed = false; //set flag for newly set limit switch trigger
     if (this->_limitTriggeredCallback)
     {
-      this->_limitTriggeredCallback();
+      this->_limitTriggeredCallback(); //TODO: this function is called from within a ISR in ESPStepperMotorServer thus we should try to delay calling of the callback to the backound task / process Steps function
     }
   }
 }
@@ -298,7 +300,7 @@ void ESP_FlexyStepper::setBrakeEngageDelayMs(unsigned long delay)
 }
 
 /**
- * set a timeout in milliseconds fter which the brake shall be released once triggered and no motion is performed by the stpper motor.
+ * set a timeout in milliseconds after which the brake shall be released once triggered and no motion is performed by the stpper motor.
  * By default the value is -1 indicating, that the brake shall never be automatically released, as long as the stepper motor is not moving to a new position.
  * Value must be larger than 1 (Even though 1ms delay does probably not make any sense since physical brakes have a delay that is most likely higher than that just to engange)
  */
@@ -338,6 +340,8 @@ void ESP_FlexyStepper::deactivateBrake()
     this->_isBrakeActive = false;
     this->_timeToReleaseBrake = LONG_MAX;
     this->_hasMovementOccuredSinceLastBrakeRelease = false;
+
+    //TODO: add delay here if configured as to https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16
   }
 }
 
@@ -760,15 +764,16 @@ void ESP_FlexyStepper::setCurrentPositionAsHomeAndStop()
  * Warning: This function requires a limit switch to be configured otherwise the motor will never stop jogging.
  * This is a non blocking function, you need make sure ESP_FlexyStepper is started as service (use startAsService() function) or need to call the processMovement function manually in your main loop.
  */
-void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome)
+void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome, long maxDistanceToMoveInSteps)
 {
   if (callbackFunctionForHome)
   {
     this->_homeReachedCallback = callbackFunctionForHome;
   }
-  if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome)
+  //the second check basically utilizes the fact the the begin and end limit switch id is 1 respectively -1 so the values are the same as the direction of the movement when the steppers moves towards of of the limits
+  if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome) 
   {
-    this->setTargetPositionInSteps(this->directionTowardsHome * 2000000000);
+    this->setTargetPositionInSteps(this->getCurrentPositionInSteps() + (this->directionTowardsHome * maxDistanceToMoveInSteps));
   }
   this->isOnWayToHome = true; //set as last action, since other functions might overwrite it
 }
@@ -782,7 +787,7 @@ void ESP_FlexyStepper::goToLimit(signed char direction, callbackFunction callbac
 
   if (this->activeLimitSwitch == 0)
   {
-    this->setTargetPositionInSteps(direction * 2000000000);
+    this->setTargetPositionInSteps(this->getCurrentPositionInSteps() + (this->directionTowardsHome * 2000000000));
   }
   this->isOnWayToLimit = true; //set as last action, since other functions might overwrite it
 }
