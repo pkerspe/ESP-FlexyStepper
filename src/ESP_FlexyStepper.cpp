@@ -373,8 +373,9 @@ float ESP_FlexyStepper::getCurrentPositionInMillimeters()
 }
 
 //
-// set the current position of the motor in millimeters, this does not move the
-// motor
+// set the current position of the motor in millimeters.
+// Do not confuse this function with setTargetPositionInMillimeters(), it does not directly cause a motor movement per se.
+// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInMillimeters() in the case that the value of currentPositionInMillimeters is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInMillimeters() with the same value as the setCurrentPositionInMillimeters() function directly before or after calling setCurrentPositionInMillimeters
 //
 void ESP_FlexyStepper::setCurrentPositionInMillimeters(
     float currentPositionInMillimeters)
@@ -540,8 +541,10 @@ float ESP_FlexyStepper::getCurrentPositionInRevolutions()
 
 //
 // set the current position of the motor in revolutions, this does not move the
-// motor
-//
+// Do not confuse this function with setTargetPositionInRevolutions(), it does not directly cause a motor movement per se.
+// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInRevolutions() in the case that the value of currentPositionInRevolutions is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInRevolutions() with the same value as the setCurrentPositionInRevolutions() function directly before or after calling setCurrentPositionInRevolutions
+
+
 void ESP_FlexyStepper::setCurrentPositionInRevolutions(
     float currentPositionInRevolutions)
 {
@@ -688,8 +691,12 @@ float ESP_FlexyStepper::getCurrentVelocityInRevolutionsPerSecond()
 
 //
 // set the current position of the motor in steps, this does not move the motor
-// Note: This function should only be called when the motor is stopped
-//    Enter:  currentPositionInSteps = the new position of the motor in steps
+// currentPositionInSteps = the new position value of the motor in steps to be set internally for the current position
+// Do not confuse this function with setTargetPositionInMillimeters(), it does not directly cause a motor movement per se.
+// Notes:
+// This function should only be called when the motor is stopped
+// If you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInSteps() in the case that the value of currentPositionInSteps is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInSteps() with the same value as the setCurrentPositionInSteps() function directly before or after calling setCurrentPositionInSteps
+
 //
 void ESP_FlexyStepper::setCurrentPositionInSteps(long currentPositionInSteps)
 {
