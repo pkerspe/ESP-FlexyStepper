@@ -17,6 +17,18 @@ The library provides the following features:
     - manually call the processMovement() function in the main loop (then you have to make sure your main loop completes quick enough to ensure smooth movement
     - use the blocking movement functions, that take care of calling processMovement but block the main loop for the duration of the movement
 
+## A word on jitter in the generated step signals
+
+Depdending on your custom code and user case where you are using the ESP FlexyStepper library as a part, you might experience some jitter (unstable/uneven step signal frequency, short breaks in the movement or in general a not always smoothly running stepper motor).
+The reason for this is to be found in the basic principle how the library is implemented currently and the fact that the Arduino sketch is running as a task within the FreeRTOS operating system of the ESP32 and along with some other hose keeping tasks in "parallel".
+When you start the library as a service using the "startAsService(int coreNumber)" function, it will start a separate task on one of the two cores of the ESP32. It most cases it will not be the only task running on this core (no matter which one you chose) so it will need to share the available CPU time with at least one other task running on the same core.
+Usually the "setup" and "loop" function of an Arduino Framework based programm will run on core 1 of the ESP.
+To my knowledge core 0 usually runs the Wifi/Bluetooth/BLE stack task.
+
+What does this mean for you and how is it related to jitter you might ask?
+Since multiple tasks that are running on the same core, also need to share the CPU cycles (for more on this topic of how tasks are managed in FreeRTOS, and the mysterious role of a 'Tick' this might be a good starting point: https://www.freertos.org/implementation/a00011.html) you can get into trouble and see some jitter expescially in higher step signal frquencies.
+
+
 ## Example
 
 The following is an example of how to use the library as a service running in the "background" as a separate Task on the ESP32:
@@ -52,7 +64,7 @@ void setup()
   
   // Not start the stepper instance as a service in the "background" as a separate task
   // and the OS of the ESP will take care of invoking the processMovement() task regularily so you can do whatever you want in the loop function
-  stepper.startAsService();
+  stepper.startAsService(1);
 }
 
 void loop()
@@ -77,7 +89,7 @@ void loop()
 | Function | Desciption |
 | --- | --- |
 | `ESP_FlexyStepper()` | constructor for the class to create a new instance of the ESP-FlexyStepper |
-| `void startAsService()` | start ESP-FlexyStepper as a seprate task (service) in the background so it handles the calls to processMovement() for you in thebackground and you are free to do whatever you want in the main loop. *Should NOT be used in combination with the synchronous (blocking) function calls for movement* |
+| `void startAsService(int coreNumber)` | start ESP-FlexyStepper as a seprate task (service) in the background on the defined CPU core defined by coreNumber parameter (valid values are 0 and 1), so it handles the calls to processMovement() for you in thebackground and you are free to do whatever you want (See note on jitter also if you plan to perform CPU intensive Tasks in the loop function) in the main loop. *Should NOT be used in combination with the synchronous (blocking) function calls for movement* |
 | `void stopService()` | stop the ESP-FlexyStepper service. Only needed if startAsService() has been called before |
 | `void connectToPins(byte stepPinNumber, byte directionPinNumber)` | setup the pin numbers where the external stepper driver is connected to. Provide the IO Pins fro step (or pulse) pin and direction pin |
 | `bool isStartedAsService()` | returns true if the ESP-FlexyStepper service has been started/is running, false if not |

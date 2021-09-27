@@ -91,9 +91,22 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 }
 
 //TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
-void ESP_FlexyStepper::startAsService(void)
+bool ESP_FlexyStepper::startAsService(int coreNumber)
 {
-  disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  if (coreNumber == 1)
+  {
+    disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  }
+  else if (coreNumber == 0)
+  {
+    disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  }
+  else
+  {
+    //invalid core number given
+    return false;
+  }
+
   xTaskCreatePinnedToCore(
       ESP_FlexyStepper::taskRunner, /* Task function. */
       "FlexyStepper",               /* String with name of task (by default max 16 characters long) */
@@ -101,8 +114,9 @@ void ESP_FlexyStepper::startAsService(void)
       this,                         /* Parameter passed as input of the task */
       1,                            /* Priority of the task, 1 seems to work just fine for us */
       &this->xHandle,               /* Task handle. */
-      1 /* the cpu core to use */
+      coreNumber                    /* the cpu core to use, 1 is where usually the Arduino Framework code (setup and loop function) are running, core 0 by default runs the Wifi Stack */
   );
+  return true;
 }
 
 void ESP_FlexyStepper::taskRunner(void *parameter)
@@ -250,10 +264,11 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
   // configure the IO pins
   pinMode(stepPin, OUTPUT);
   digitalWrite(stepPin, LOW);
-  
-  if(directionPin<255){
-	pinMode(directionPin, OUTPUT);
-	}
+
+  if (directionPin < 255)
+  {
+    pinMode(directionPin, OUTPUT);
+  }
   digitalWrite(directionPin, LOW);
 }
 
@@ -499,7 +514,7 @@ void ESP_FlexyStepper::setTargetPositionInMillimeters(
 
 float ESP_FlexyStepper::getTargetPositionInMillimeters()
 {
-	return getTargetPositionInSteps() / stepsPerMillimeter;
+  return getTargetPositionInSteps() / stepsPerMillimeter;
 }
 
 //
@@ -543,7 +558,6 @@ float ESP_FlexyStepper::getCurrentPositionInRevolutions()
 // set the current position of the motor in revolutions, this does not move the
 // Do not confuse this function with setTargetPositionInRevolutions(), it does not directly cause a motor movement per se.
 // NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInRevolutions() in the case that the value of currentPositionInRevolutions is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInRevolutions() with the same value as the setCurrentPositionInRevolutions() function directly before or after calling setCurrentPositionInRevolutions
-
 
 void ESP_FlexyStepper::setCurrentPositionInRevolutions(
     float currentPositionInRevolutions)
@@ -667,7 +681,7 @@ void ESP_FlexyStepper::setTargetPositionInRevolutions(
 
 float ESP_FlexyStepper::getTargetPositionInRevolutions()
 {
-	return getTargetPositionInSteps() / stepsPerRevolution;
+  return getTargetPositionInSteps() / stepsPerRevolution;
 }
 
 //
@@ -778,7 +792,7 @@ void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionFo
     this->_homeReachedCallback = callbackFunctionForHome;
   }
   //the second check basically utilizes the fact the the begin and end limit switch id is 1 respectively -1 so the values are the same as the direction of the movement when the steppers moves towards of of the limits
-  if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome) 
+  if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome)
   {
     this->setTargetPositionInSteps(this->getCurrentPositionInSteps() + (this->directionTowardsHome * maxDistanceToMoveInSteps));
   }
@@ -1039,7 +1053,7 @@ void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInS
 
 long ESP_FlexyStepper::getTargetPositionInSteps()
 {
-	return targetPosition_InSteps;
+  return targetPosition_InSteps;
 }
 
 //
@@ -1054,7 +1068,8 @@ void ESP_FlexyStepper::setTargetPositionToStop()
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
 
-  if(directionOfMotion == 0){
+  if (directionOfMotion == 0)
+  {
     return;
   }
 
