@@ -39,7 +39,7 @@ Decision matrix:
 | Scenario | Suggestion which core to use |
 | --- | --- |
 | You are using Wifi / Bluetooth or BLE in your project | if you send/receive data while the motor is moving: start the service on core 1<br/>if you only send / receive data while the motor is not moving: you might get away with starting the service on core 0, if you experience jitter, start it on core 1 |
-| You are MOT using Wifi / Bluetooth or BLE in your project | start the service on core 0 |
+| You are NOT using Wifi / Bluetooth or BLE in your project | start the service on core 0 |
 | You have a lot of code in your loop() function that takes a lot of time for each loop execution | if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design |
 
 For more details on the topic you can also have a look at the discussion in issue #4: https://github.com/pkerspe/ESP-FlexyStepper/issues/4 
