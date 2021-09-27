@@ -36,9 +36,11 @@ If you rely on wireless communication in your project and at the same time you h
 The goal is to keep the time neeed to execute the code in the loop function as short as possible as long as the ESP Flexyy Stepper library is running as a service on Core 1. You can move in the direction of a interrupt or event based design pattern rather than having long running loops or while statements that just wait for a response or change of a pin state for example.
 
 Decision matrix:
-|Are you using Wifi / Bluetooth or BLE in your project?|if you send/receive data while the motor is moving: start the service on core 1<br/>if you only send / receive data while the motor is not moving: you might get away with starting the service on core 0, if you experience jitter, start it on core 1|
-|If you are not using Wifi / Bluetooth or BLE in your project|start the service on core 0|
-|If you have a lot of code in your loop() function that takes a lot of time for each execution|if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design|
+| Scenario | Suggestion which core to use |
+| --- | --- |
+| You are using Wifi / Bluetooth or BLE in your project | if you send/receive data while the motor is moving: start the service on core 1<br/>if you only send / receive data while the motor is not moving: you might get away with starting the service on core 0, if you experience jitter, start it on core 1 |
+| You are MOT using Wifi / Bluetooth or BLE in your project | start the service on core 0 |
+| You have a lot of code in your loop() function that takes a lot of time for each loop execution | if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design |
 
 For more details on the topic you can also have a look at the discussion in issue #4: https://github.com/pkerspe/ESP-FlexyStepper/issues/4 
 
