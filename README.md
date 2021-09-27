@@ -26,7 +26,19 @@ Usually the "setup" and "loop" function of an Arduino Framework based programm w
 To my knowledge core 0 usually runs the Wifi/Bluetooth/BLE stack task.
 
 What does this mean for you and how is it related to jitter you might ask?
-Since multiple tasks that are running on the same core, also need to share the CPU cycles (for more on this topic of how tasks are managed in FreeRTOS, and the mysterious role of a 'Tick' this might be a good starting point: https://www.freertos.org/implementation/a00011.html) you can get into trouble and see some jitter expescially in higher step signal frquencies.
+Since multiple tasks that are running on the same core, also need to share the CPU cycles (for more on this topic of how tasks are managed in FreeRTOS, and the mysterious role of a 'Tick' this might be a good starting point: https://www.freertos.org/implementation/a00011.html) you can get into trouble and see some jitter expescially with higher step signal frequencies (higher stepper speeds). The result will be a noisy, bumpy stepper movement since the ESP Flexy Stepper Task is interrupted by the Operating System every now and then and thus might not be able to send the step signal in time to the IO Pin. 
+
+What can I do now?
+When starting the service using the startAsService() function you can provide a parameter to define the core number on which to pin the task to. The default value is 1.
+
+If you have lot of code in the loop() function of you programm, you can start the stepper service on Core 0 of the ESP32, this way it will not interfere with some heavy load you might be generating in the loop function BUT if you are also using the WiFi/Bluetooth/BLE stack of the ESP32, then core 0 might not be a good idea either, since the task that manages the before managed stack is usually running on core 0 of the ESP32 and with a high priority. So if you move the motor and at the same time have a lot of Wifi traffic or BT/BLE communication going on, the OS will frequently stop the execution of the ESP Flexy Stepper task to yield the way for the Wireless stack. You will see more jitter the more wireless communication is going on.
+If you rely on wireless communication in your project and at the same time you have some a lot of going on in the loop function (e.g. long running loops and other function calls), you might need to change your software architecture in general.
+The goal is to keep the time neeed to execute the code in the loop function as short as possible as long as the ESP Flexyy Stepper library is running as a service on Core 1. You can move in the direction of a interrupt or event based design pattern rather than having long running loops or while statements that just wait for a response or change of a pin state for example.
+
+Decision matrix:
+|Are you using Wifi / Bluetooth or BLE in your project?|if you send/receive data while the motor is moving: start the service on core 1<br/>if you only send / receive data while the motor is not moving: you might get away with starting the service on core 0, if you experience jitter, start it on core 1|
+|If you are not using Wifi / Bluetooth or BLE in your project|start the service on core 0|
+|If you have a lot of code in your loop() function that takes a lot of time for each execution|if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design|
 
 
 ## Example
