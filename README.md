@@ -7,7 +7,7 @@ This library is used to control one or more stepper motors with a ESP 32 module.
 ## Features
 
 The library provides the following features:
-  - generating pulses for a connected stepper driver with a dir and step input
+  - generating pulses for a connected stepper driver with a direction and step input
   - connection of emergency switch to stop all motion immendiately
   - connection of limit switches / homing switches
   - blocking and non blocking function calls possible
@@ -40,12 +40,12 @@ Decision matrix:
 | --- | --- |
 | You are using Wifi / Bluetooth or BLE in your project | if you send/receive data while the motor is moving: start the service on core 1<br/>if you only send / receive data while the motor is not moving: you might get away with starting the service on core 0, if you experience jitter, start it on core 1 |
 | You are NOT using Wifi / Bluetooth or BLE in your project | start the service on core 0 |
-| You have a lot of code in your loop() function that takes a lot of time for each loop execution | if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design |
+| You have a lot of code in your loop() function that takes a lot of time for each loop execution | if you are not using wireless communication: start the service on core 0<br/>if you are using wireless communication, go to line one of this decision matrix, if this does not help you will most likely need to optimize your loop() function execution time or move to a event/interrupt based design. You can also try to increase the task priorty of the ESP Flexy Stepper task in ESP_FlexyStepper.cpp in the xTaskCreatePinnedToCore(...) function call |
 
 For more details on the topic you can also have a look at the discussion in issue #4: https://github.com/pkerspe/ESP-FlexyStepper/issues/4 
 
 
-## Example
+## Example Code
 
 The following is an example of how to use the library as a service running in the "background" as a separate Task on the ESP32:
 
@@ -96,7 +96,7 @@ void loop()
   }
   
   // Notice that you can now do whatever you want in the loop function without the need to call processMovement().
-  // also you do not have to care if your loop processing times are too long. 
+  // also you do not have to care if your loop processing times are too long (you might experience some jitter though if you do). 
 }
 ```
 
