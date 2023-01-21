@@ -38,12 +38,11 @@
 
 #ifdef ESP32
 //
-//#elif defined(ESP8266)
+// #elif defined(ESP8266)
 //
 #else
 #error Platform not supported, only ESP32 modules are currently supported
 #endif
-
 
 #include <Arduino.h>
 #include <stdlib.h>
@@ -56,13 +55,13 @@ class ESP_FlexyStepper
 public:
   ESP_FlexyStepper();
   ~ESP_FlexyStepper();
-  //service functions
+  // service functions
   bool startAsService(int coreNumber = 1);
   void stopService(void);
   bool isStartedAsService(void);
 
-  //IO setup and helper / debugging functions
-  void connectToPins(byte stepPinNumber, byte directionPinNumber=255);
+  // IO setup and helper / debugging functions
+  void connectToPins(byte stepPinNumber, byte directionPinNumber = 255);
   void setBrakePin(signed char brakePin, byte activeState = ESP_FlexyStepper::ACTIVE_HIGH);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
@@ -74,17 +73,17 @@ public:
   void activateBrake(void);
   void deactivateBrake(void);
   bool isBakeActive(void);
-  //the central function to calculate the next movment step signal
+  // the central function to calculate the next movment step signal
   bool processMovement(void);
 
-  //register function for callbacks
+  // register function for callbacks
   void registerHomeReachedCallback(callbackFunction homeReachedCallbackFunction);
   void registerLimitReachedCallback(callbackFunction limitSwitchTriggerdCallbackFunction);
   void registerTargetPositionReachedCallback(positionCallbackFunction targetPositionReachedCallbackFunction);
   void registerEmergencyStopTriggeredCallback(callbackFunction emergencyStopTriggerdCallbackFunction);
   void registerEmergencyStopReleasedCallback(callbackFunction emergencyStopReleasedCallbackFunction);
 
-  //configuration functions
+  // configuration functions
   void setStepsPerMillimeter(float motorStepPerMillimeter);
   void setStepsPerRevolution(float motorStepPerRevolution);
   void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
@@ -106,7 +105,7 @@ public:
   float getCurrentVelocityInRevolutionsPerSecond();
   float getCurrentVelocityInMillimetersPerSecond(void);
 
-  //positioning functions
+  // positioning functions
   void setCurrentPositionInSteps(long currentPositionInSteps);
   void setCurrentPositionInMillimeters(float currentPositionInMillimeters);
   void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
@@ -119,7 +118,6 @@ public:
   void stopJogging();
   void goToLimitAndSetAsHome(callbackFunction callbackFunctionForHome = NULL, long maxDistanceToMoveInSteps = 2000000000L);
   void goToLimit(signed char direction, callbackFunction callbackFunctionForLimit = NULL);
-  
 
   void setCurrentPositionAsHomeAndStop(void);
   void setTargetPositionToStop();
@@ -136,7 +134,7 @@ public:
   float getTargetPositionInMillimeters();
   float getTargetPositionInRevolutions();
 
-  //blocking function calls
+  // blocking function calls
   void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
   void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
   void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
@@ -148,9 +146,9 @@ public:
   bool moveToHomeInMillimeters(signed char directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters, int homeLimitSwitchPin);
   bool moveToHomeInRevolutions(signed char directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions, int homeLimitSwitchPin);
 
-  static const byte LIMIT_SWITCH_BEGIN = -1;
-  static const byte LIMIT_SWITCH_END = 1;
-  static const byte LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
+  static const signed char LIMIT_SWITCH_BEGIN = -1;
+  static const signed char LIMIT_SWITCH_END = 1;
+  static const signed char LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
   static const byte ACTIVE_HIGH = 1;
   static const byte ACTIVE_LOW = 2;
 
@@ -199,12 +197,12 @@ private:
   bool holdEmergencyStopUntilExplicitRelease;
   signed char directionTowardsHome;
   signed char lastStepDirectionBeforeLimitSwitchTrigger;
-  //true if the current stepper positon equals the homing position
+  // true if the current stepper positon equals the homing position
   bool isCurrentlyHomed;
   bool isOnWayToHome = false;
   bool isOnWayToLimit = false;
   bool firstProcessingAfterTargetReached = true;
-  //The type ID of the limit switch type that is active. possible values are LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) or LIMIT_SWITCH_COMBINED_BEGIN_AND_END (2) or 0 if no limit switch is active
+  // The type ID of the limit switch type that is active. possible values are LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) or LIMIT_SWITCH_COMBINED_BEGIN_AND_END (2) or 0 if no limit switch is active
   signed char activeLimitSwitch;
   bool limitSwitchCheckPeformed;
   // 0 if the the stepper is allowed to move in both directions (e.g. no limit or homing switch triggered), otherwise indicated which direction is currently not allowed for further movement
