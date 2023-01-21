@@ -210,7 +210,7 @@ void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
  * whether the limit switch near the begin (direction of home position) or at the end of the movement has ben triggered.
  * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and retriggering the limit switch function
  */
-void ESP_FlexyStepper::setLimitSwitchActive(byte limitSwitchType)
+void ESP_FlexyStepper::setLimitSwitchActive(signed char limitSwitchType)
 {
   if (limitSwitchType == LIMIT_SWITCH_BEGIN || limitSwitchType == LIMIT_SWITCH_END || limitSwitchType == LIMIT_SWITCH_COMBINED_BEGIN_AND_END)
   {
@@ -279,7 +279,7 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
 * active high = 1, active low = 2
 * Will be set to ative high by default or if an invalid value is given
 */
-void ESP_FlexyStepper::setBrakePin(byte brakePin, byte activeState)
+void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
 {
   this->brakePin = brakePin;
   if (activeState == ESP_FlexyStepper::ACTIVE_HIGH || activeState == ESP_FlexyStepper::ACTIVE_LOW)
@@ -294,7 +294,7 @@ void ESP_FlexyStepper::setBrakePin(byte brakePin, byte activeState)
   if (this->brakePin >= 0)
   {
     // configure the IO pins
-    pinMode(this->brakePin, OUTPUT);
+    pinMode((uint8_t)this->brakePin, OUTPUT);
     this->deactivateBrake();
     _isBrakeConfigured = true;
   }
@@ -315,7 +315,7 @@ void ESP_FlexyStepper::setBrakeEngageDelayMs(unsigned long delay)
 }
 
 /**
- * set a timeout in milliseconds after which the brake shall be released once triggered and no motion is performed by the stpper motor.
+ * set a timeout in milliseconds after which the brake shall be released once triggered and no motion is performed by the stepper motor.
  * By default the value is -1 indicating, that the brake shall never be automatically released, as long as the stepper motor is not moving to a new position.
  * Value must be larger than 1 (Even though 1ms delay does probably not make any sense since physical brakes have a delay that is most likely higher than that just to engange)
  */
@@ -338,7 +338,7 @@ void ESP_FlexyStepper::activateBrake()
 {
   if (this->_isBrakeConfigured)
   {
-    digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
+    digitalWrite((uint8_t)this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
     this->_isBrakeActive = true;
     this->_timeToEngangeBrake = LONG_MAX;
   }
@@ -351,7 +351,7 @@ void ESP_FlexyStepper::deactivateBrake()
 {
   if (this->_isBrakeConfigured)
   {
-    digitalWrite(this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 0 : 1);
+    digitalWrite((uint8_t)this->brakePin, (this->brakePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 0 : 1);
     this->_isBrakeActive = false;
     this->_timeToReleaseBrake = LONG_MAX;
     this->_hasMovementOccuredSinceLastBrakeRelease = false;
@@ -1255,6 +1255,7 @@ bool ESP_FlexyStepper::processMovement(void)
   if (this->_isBrakeConfigured && this->_isBrakeActive)
   {
     this->deactivateBrake();
+    //TODO: For Feature Request https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16 we might need to set a timer and return here to prevent issuing the stepPin singal before the break is released
   }
 
   // execute the step on the rising edge
@@ -1270,10 +1271,9 @@ bool ESP_FlexyStepper::processMovement(void)
   // figure out how long before the next step
   DeterminePeriodOfNextStep();
 
+  this->_hasMovementOccuredSinceLastBrakeRelease = true;
   // return the step line low
   digitalWrite(stepPin, LOW);
-
-  this->_hasMovementOccuredSinceLastBrakeRelease = true;
 
   // check if the move has reached its final target position, return true if all
   // done
