@@ -77,7 +77,7 @@ ESP_FlexyStepper::ESP_FlexyStepper()
   this->isCurrentlyHomed = false;
   this->directionTowardsHome = -1;
   this->disallowedDirection = 0;
-  this->activeLimitSwitch = 0; //see LIMIT_SWITCH_BEGIN and LIMIT_SWITCH_END
+  this->activeLimitSwitch = 0; // see LIMIT_SWITCH_BEGIN and LIMIT_SWITCH_END
   this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
   this->limitSwitchCheckPeformed = false;
 }
@@ -90,9 +90,10 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
   }
 }
 
-//TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
+// TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 bool ESP_FlexyStepper::startAsService(int coreNumber)
 {
+  
   if (coreNumber == 1)
   {
     disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
@@ -103,7 +104,7 @@ bool ESP_FlexyStepper::startAsService(int coreNumber)
   }
   else
   {
-    //invalid core number given
+    // invalid core number given
     return false;
   }
 
@@ -116,6 +117,8 @@ bool ESP_FlexyStepper::startAsService(int coreNumber)
       &this->xHandle,               /* Task handle. */
       coreNumber                    /* the cpu core to use, 1 is where usually the Arduino Framework code (setup and loop function) are running, core 0 by default runs the Wifi Stack */
   );
+
+  configASSERT(this->xHandle);
   return true;
 }
 
@@ -125,7 +128,7 @@ void ESP_FlexyStepper::taskRunner(void *parameter)
   for (;;)
   {
     stepperRef->processMovement();
-    //vTaskDelay(1); // This would be a working solution to prevent the WDT to fire (if not disabled, yet it will cause noticeably less smooth stepper movements / lower frequencies)
+    // vTaskDelay(1); // This would be a working solution to prevent the WDT to fire (if not disabled, yet it will cause noticeably less smooth stepper movements / lower frequencies)
   }
 }
 
@@ -166,7 +169,7 @@ long ESP_FlexyStepper::getDistanceToTargetSigned()
 
 /**
  * perform an emergency stop, causing all movements to be canceled instantly
- * the optional parameter 'holdUntilReleased' allows to define if the emergency stop shall only affect the current motion (if any) 
+ * the optional parameter 'holdUntilReleased' allows to define if the emergency stop shall only affect the current motion (if any)
  * or if it should hold the emergency stop status (kind of a latching functionality) until the releaseEmergencyStop() function is called explicitly.
  * Default for holdUntilReleased is false (if paremter is ommitted)
  */
@@ -206,7 +209,7 @@ void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
 
 /**
  * Notification of an externaly detected limit switch activation
- * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) as parameter values to indicate 
+ * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) as parameter values to indicate
  * whether the limit switch near the begin (direction of home position) or at the end of the movement has ben triggered.
  * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and retriggering the limit switch function
  */
@@ -215,10 +218,10 @@ void ESP_FlexyStepper::setLimitSwitchActive(signed char limitSwitchType)
   if (limitSwitchType == LIMIT_SWITCH_BEGIN || limitSwitchType == LIMIT_SWITCH_END || limitSwitchType == LIMIT_SWITCH_COMBINED_BEGIN_AND_END)
   {
     this->activeLimitSwitch = limitSwitchType;
-    this->limitSwitchCheckPeformed = false; //set flag for newly set limit switch trigger
+    this->limitSwitchCheckPeformed = false; // set flag for newly set limit switch trigger
     if (this->_limitTriggeredCallback)
     {
-      this->_limitTriggeredCallback(); //TODO: this function is called from within a ISR in ESPStepperMotorServer thus we should try to delay calling of the callback to the backound task / process Steps function
+      this->_limitTriggeredCallback(); // TODO: this function is called from within a ISR in ESPStepperMotorServer thus we should try to delay calling of the callback to the backound task / process Steps function
     }
   }
 }
@@ -252,10 +255,10 @@ bool ESP_FlexyStepper::isMovingTowardsHome()
 }
 
 /*
-* connect the stepper object to the IO pins
-* stepPinNumber = IO pin number for the Step signale
-* directionPinNumber = IO pin number for the direction signal
-*/
+ * connect the stepper object to the IO pins
+ * stepPinNumber = IO pin number for the Step signale
+ * directionPinNumber = IO pin number for the direction signal
+ */
 void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber)
 {
   this->stepPin = stepPinNumber;
@@ -273,12 +276,12 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
 }
 
 /*
-* setup an IO pin to trigger an external brake for the motor.
-* This is an optional step, set to -1 to disable this function (which is default)
-* the active state parameter defines if the external brake is configured in an active high (pin goes high to enable the brake) or active low (pin goes low to activate the brake) setup.
-* active high = 1, active low = 2
-* Will be set to ative high by default or if an invalid value is given
-*/
+ * setup an IO pin to trigger an external brake for the motor.
+ * This is an optional step, set to -1 to disable this function (which is default)
+ * the active state parameter defines if the external brake is configured in an active high (pin goes high to enable the brake) or active low (pin goes low to activate the brake) setup.
+ * active high = 1, active low = 2
+ * Will be set to ative high by default or if an invalid value is given
+ */
 void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
 {
   this->brakePin = brakePin;
@@ -332,7 +335,7 @@ void ESP_FlexyStepper::setBrakeReleaseDelayMs(signed long delay)
 }
 
 /**
- * activate (engage) the motor brake (if any is configured, otherwise will do nothing) 
+ * activate (engage) the motor brake (if any is configured, otherwise will do nothing)
  */
 void ESP_FlexyStepper::activateBrake()
 {
@@ -345,7 +348,7 @@ void ESP_FlexyStepper::activateBrake()
 }
 
 /**
- * deactivate (release) the motor brake (if any is configured, otherwise will do nothing) 
+ * deactivate (release) the motor brake (if any is configured, otherwise will do nothing)
  */
 void ESP_FlexyStepper::deactivateBrake()
 {
@@ -356,7 +359,7 @@ void ESP_FlexyStepper::deactivateBrake()
     this->_timeToReleaseBrake = LONG_MAX;
     this->_hasMovementOccuredSinceLastBrakeRelease = false;
 
-    //TODO: add delay here if configured as to https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16
+    // TODO: add delay here if configured as to https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16
   }
 }
 
@@ -791,12 +794,12 @@ void ESP_FlexyStepper::goToLimitAndSetAsHome(callbackFunction callbackFunctionFo
   {
     this->_homeReachedCallback = callbackFunctionForHome;
   }
-  //the second check basically utilizes the fact the the begin and end limit switch id is 1 respectively -1 so the values are the same as the direction of the movement when the steppers moves towards of of the limits
+  // the second check basically utilizes the fact the the begin and end limit switch id is 1 respectively -1 so the values are the same as the direction of the movement when the steppers moves towards of of the limits
   if (this->activeLimitSwitch == 0 || this->activeLimitSwitch != this->directionTowardsHome)
   {
     this->setTargetPositionInSteps(this->getCurrentPositionInSteps() + (this->directionTowardsHome * maxDistanceToMoveInSteps));
   }
-  this->isOnWayToHome = true; //set as last action, since other functions might overwrite it
+  this->isOnWayToHome = true; // set as last action, since other functions might overwrite it
 }
 
 void ESP_FlexyStepper::goToLimit(signed char direction, callbackFunction callbackFunctionForLimit)
@@ -810,7 +813,7 @@ void ESP_FlexyStepper::goToLimit(signed char direction, callbackFunction callbac
   {
     this->setTargetPositionInSteps(this->getCurrentPositionInSteps() + (this->directionTowardsHome * 2000000000));
   }
-  this->isOnWayToLimit = true; //set as last action, since other functions might overwrite it
+  this->isOnWayToLimit = true; // set as last action, since other functions might overwrite it
 }
 
 /**
@@ -838,7 +841,7 @@ void ESP_FlexyStepper::registerTargetPositionReachedCallback(positionCallbackFun
 }
 
 /**
- * register a callback function to be called whenever a emergency stop is triggered 
+ * register a callback function to be called whenever a emergency stop is triggered
  */
 void ESP_FlexyStepper::registerEmergencyStopTriggeredCallback(callbackFunction emergencyStopTriggerdCallbackFunction)
 {
@@ -1044,7 +1047,7 @@ void ESP_FlexyStepper::moveToPositionInSteps(long absolutePositionToMoveToInStep
 //
 void ESP_FlexyStepper::setTargetPositionInSteps(long absolutePositionToMoveToInSteps)
 {
-  //abort potentially running homing movement
+  // abort potentially running homing movement
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
   targetPosition_InSteps = absolutePositionToMoveToInSteps;
@@ -1064,7 +1067,7 @@ long ESP_FlexyStepper::getTargetPositionInSteps()
 //
 void ESP_FlexyStepper::setTargetPositionToStop()
 {
-  //abort potentially running homing movement
+  // abort potentially running homing movement
   this->isOnWayToHome = false;
   this->isOnWayToLimit = false;
 
@@ -1097,7 +1100,7 @@ bool ESP_FlexyStepper::processMovement(void)
 {
   if (emergencyStopActive)
   {
-    //abort potentially running homing movement
+    // abort potentially running homing movement
     this->isOnWayToHome = false;
     this->isOnWayToLimit = false;
 
@@ -1106,7 +1109,7 @@ bool ESP_FlexyStepper::processMovement(void)
     directionOfMotion = 0;
     targetPosition_InSteps = currentPosition_InSteps;
 
-    //activate brake (if configured) driectly due to emergency stop if not already active
+    // activate brake (if configured) driectly due to emergency stop if not already active
     if (this->_isBrakeConfigured && !this->_isBrakeActive)
     {
       this->activateBrake();
@@ -1119,7 +1122,7 @@ bool ESP_FlexyStepper::processMovement(void)
     return (true);
   }
 
-  //check if delayed brake shall be engaged / released
+  // check if delayed brake shall be engaged / released
   if (this->_timeToEngangeBrake != LONG_MAX && this->_timeToEngangeBrake <= millis())
   {
     this->activateBrake();
@@ -1131,7 +1134,7 @@ bool ESP_FlexyStepper::processMovement(void)
 
   long distanceToTarget_Signed;
 
-  //check if limit switch flag is active
+  // check if limit switch flag is active
   if (this->activeLimitSwitch != 0)
   {
     distanceToTarget_Signed = targetPosition_InSteps - currentPosition_InSteps;
@@ -1140,7 +1143,7 @@ bool ESP_FlexyStepper::processMovement(void)
     {
       this->limitSwitchCheckPeformed = true;
 
-      //a limit switch is active, so movement is only allowed in one direction (away from the switch)
+      // a limit switch is active, so movement is only allowed in one direction (away from the switch)
       if (this->activeLimitSwitch == this->LIMIT_SWITCH_BEGIN)
       {
         this->disallowedDirection = this->directionTowardsHome;
@@ -1151,7 +1154,7 @@ bool ESP_FlexyStepper::processMovement(void)
       }
       else if (this->activeLimitSwitch == this->LIMIT_SWITCH_COMBINED_BEGIN_AND_END)
       {
-        //limit switches are paired together, so we need to try to figure out by checking which one it is, by using the last used step direction
+        // limit switches are paired together, so we need to try to figure out by checking which one it is, by using the last used step direction
         if (distanceToTarget_Signed > 0)
         {
           this->lastStepDirectionBeforeLimitSwitchTrigger = 1;
@@ -1164,16 +1167,16 @@ bool ESP_FlexyStepper::processMovement(void)
         }
       }
 
-      //movement has been triggerd by goToLimitAndSetAsHome() function. so once the limit switch has been triggered we have reached the limit and need to set it as home
+      // movement has been triggerd by goToLimitAndSetAsHome() function. so once the limit switch has been triggered we have reached the limit and need to set it as home
       if (this->isOnWayToHome)
       {
-        this->setCurrentPositionAsHomeAndStop(); //clear isOnWayToHome flag and stop motion
+        this->setCurrentPositionAsHomeAndStop(); // clear isOnWayToHome flag and stop motion
 
         if (this->_homeReachedCallback != NULL)
         {
           this->_homeReachedCallback();
         }
-        //activate brake (or schedule activation) since we reached the final position
+        // activate brake (or schedule activation) since we reached the final position
         if (this->_isBrakeConfigured && !this->_isBrakeActive)
         {
           this->triggerBrakeIfNeededOrSetTimeout();
@@ -1182,17 +1185,17 @@ bool ESP_FlexyStepper::processMovement(void)
       }
     }
 
-    //check if further movement is allowed
+    // check if further movement is allowed
     if (
         (this->disallowedDirection == 1 && distanceToTarget_Signed > 0) ||
         (this->disallowedDirection == -1 && distanceToTarget_Signed < 0))
     {
-      //limit switch is acitve and movement in request direction is not allowed
+      // limit switch is acitve and movement in request direction is not allowed
       currentStepPeriod_InUS = 0.0;
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
       targetPosition_InSteps = currentPosition_InSteps;
-      //activate brake (or schedule activation) since limit is active for requested direction
+      // activate brake (or schedule activation) since limit is active for requested direction
       if (this->_isBrakeConfigured && !this->_isBrakeActive)
       {
         this->triggerBrakeIfNeededOrSetTimeout();
@@ -1234,7 +1237,7 @@ bool ESP_FlexyStepper::processMovement(void)
     else
     {
       this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
-      //activate brake since motor is stopped
+      // activate brake since motor is stopped
       if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_hasMovementOccuredSinceLastBrakeRelease)
       {
         this->triggerBrakeIfNeededOrSetTimeout();
@@ -1251,11 +1254,11 @@ bool ESP_FlexyStepper::processMovement(void)
   if (periodSinceLastStep_InUS < (unsigned long)nextStepPeriod_InUS)
     return (false);
 
-  //we have to move, so deactivate brake (if configured at all) immediately
+  // we have to move, so deactivate brake (if configured at all) immediately
   if (this->_isBrakeConfigured && this->_isBrakeActive)
   {
     this->deactivateBrake();
-    //TODO: For Feature Request https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16 we might need to set a timer and return here to prevent issuing the stepPin singal before the break is released
+    // TODO: For Feature Request https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16 we might need to set a timer and return here to prevent issuing the stepPin singal before the break is released
   }
 
   // execute the step on the rising edge
@@ -1294,7 +1297,7 @@ bool ESP_FlexyStepper::processMovement(void)
         {
           this->_targetPositionReachedCallback(currentPosition_InSteps);
         }
-        //activate brake since we reached the final position
+        // activate brake since we reached the final position
         if (this->_isBrakeConfigured && !this->_isBrakeActive)
         {
           this->triggerBrakeIfNeededOrSetTimeout();
@@ -1311,7 +1314,7 @@ bool ESP_FlexyStepper::processMovement(void)
  */
 void ESP_FlexyStepper::triggerBrakeIfNeededOrSetTimeout()
 {
-  //check if break is already set or a timeout has already beend set
+  // check if break is already set or a timeout has already beend set
   if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_timeToEngangeBrake == LONG_MAX)
   {
     if (this->_brakeReleaseDelayMs > 0 && this->_hasMovementOccuredSinceLastBrakeRelease)
