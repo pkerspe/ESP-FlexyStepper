@@ -122,7 +122,6 @@ public:
   void setCurrentPositionAsHomeAndStop(void);
   void setTargetPositionToStop();
   long getDistanceToTargetSigned(void);
-  void setCurrentPositionInSteps(long currentPositionInSteps);
 
   void setTargetPositionInSteps(long absolutePositionToMoveToInSteps);
   void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
