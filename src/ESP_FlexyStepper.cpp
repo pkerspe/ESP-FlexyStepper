@@ -800,6 +800,15 @@ void ESP_FlexyStepper::setCurrentPositionAsHomeAndStop()
 }
 
 /**
+ * set the current position counter to a defined value
+ * Can be used to resetting the position counter or setting it to a specific value for calibration etc.
+ * Use setCurrentPositionAsHomeAndStop instead if you want to set a real home position value
+*/
+void setCurrentPositionInSteps(long currentPositionInSteps){
+  this->currentPosition_InSteps = currentPositionInSteps;
+}
+
+/**
  * start jogging in the direction of home (use setDirectionToHome() to set the proper direction) until the limit switch is hit, then set the position as home
  * Warning: This function requires a limit switch to be configured otherwise the motor will never stop jogging.
  * This is a non blocking function, you need make sure ESP_FlexyStepper is started as service (use startAsService() function) or need to call the processMovement function manually in your main loop.
