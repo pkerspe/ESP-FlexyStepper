@@ -102,7 +102,7 @@ void loop()
 
 ## Function overview
 
-| Function | Desciption |
+| Function | Description |
 | --- | --- |
 | `ESP_FlexyStepper()` | constructor for the class to create a new instance of the ESP-FlexyStepper |
 | `void startAsService(int coreNumber)` | start ESP-FlexyStepper as a separate task (service) in the background on the defined CPU core defined by coreNumber parameter (valid values are 0 and 1), so it handles the calls to processMovement() for you in the background and you are free to do whatever you want (See note on jitter also if you plan to perform CPU intensive Tasks in the loop function) in the main loop. *Should NOT be used in combination with the synchronous (blocking) function calls for movement* |
@@ -141,6 +141,7 @@ void loop()
 | `float getCurrentVelocityInMillimetersPerSecond(void)` | return the current velocity as floating point number in millimeters/Second. *Note: make sure you configured the stepper correctly using the `setStepsPerMillimeter` function before calling this function, otherwise the result might be incorrect!* |
 | `void setCurrentPositionInSteps(long currentPositionInSteps)` | set the register for the current position to a specific value e.g. to mark the home position. NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInSteps(currentPositionInSteps) in the case that the value of currentPositionInSteps is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInSteps() with the same value as the setCurrentPositionInSteps() function directly before or after calling setCurrentPositionInSteps |
 | `void setCurrentPositionAsHomeAndStop(void)` | set the current position of the stepper as the home position. This also sets the current position to 0. After performing this step you can always return to the home position by calling `setTargetPoisitionInSteps(0)`(or for blocking calls `moveToPositionInSteps(0)`) |
+| `void setCurrentPositionInSteps(long currentPositionInSteps)` | set the current position counter to a defined value. Can be used to resetting the position counter or setting it to a specific value for calibration etc. Use setCurrentPositionAsHomeAndStop instead if you want to set a real home position value |
 | `long getCurrentPositionInSteps()` | return the current position of the stepper in steps (absolute value, could also be negative if no proper homing has been performed before) |
 | `bool moveToHomeInSteps(signed char directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps, int homeSwitchPin)` | *Blocking call:* start movement in the given direction with a maximum number of steps or until the IO Pin defined by homeSwitchPin is going low (active low switch is required, since the library will configure this pin as input with internal pull-up in the current version). This is a blocking function, it will not return before the final position has been reached.|
 | `void moveRelativeInSteps(long distanceToMoveInSteps)` | *Blocking call:* start movement to the given relative position from current position. This is a blocking function, it will not return before the final position has been reached. |
