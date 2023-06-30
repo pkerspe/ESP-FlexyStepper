@@ -93,7 +93,7 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 // TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 bool ESP_FlexyStepper::startAsService(int coreNumber)
 {
-  
+
   if (coreNumber == 1)
   {
     disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
@@ -171,7 +171,7 @@ long ESP_FlexyStepper::getDistanceToTargetSigned()
  * perform an emergency stop, causing all movements to be canceled instantly
  * the optional parameter 'holdUntilReleased' allows to define if the emergency stop shall only affect the current motion (if any)
  * or if it should hold the emergency stop status (kind of a latching functionality) until the releaseEmergencyStop() function is called explicitly.
- * Default for holdUntilReleased is false (if paremter is ommitted)
+ * Default for holdUntilReleased is false (if parameter is omitted)
  */
 void ESP_FlexyStepper::emergencyStop(bool holdUntilReleased)
 {
@@ -184,7 +184,7 @@ void ESP_FlexyStepper::emergencyStop(bool holdUntilReleased)
 }
 
 /**
- * releases an emergency stop that has previously been engaded using a call to emergencyStop(true)
+ * releases an emergency stop that has previously been engaged using a call to emergencyStop(true)
  */
 void ESP_FlexyStepper::releaseEmergencyStop()
 {
@@ -208,10 +208,10 @@ void ESP_FlexyStepper::setDirectionToHome(signed char directionTowardHome)
 }
 
 /**
- * Notification of an externaly detected limit switch activation
+ * Notification of an externally detected limit switch activation
  * Accepts LIMIT_SWITCH_BEGIN (-1) or LIMIT_SWITCH_END (1) as parameter values to indicate
  * whether the limit switch near the begin (direction of home position) or at the end of the movement has ben triggered.
- * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and retriggering the limit switch function
+ * It is strongly recommended to perform debouncing before calling this function to prevent issues when button is released and re-triggering the limit switch function
  */
 void ESP_FlexyStepper::setLimitSwitchActive(signed char limitSwitchType)
 {
@@ -221,7 +221,7 @@ void ESP_FlexyStepper::setLimitSwitchActive(signed char limitSwitchType)
     this->limitSwitchCheckPeformed = false; // set flag for newly set limit switch trigger
     if (this->_limitTriggeredCallback)
     {
-      this->_limitTriggeredCallback(); // TODO: this function is called from within a ISR in ESPStepperMotorServer thus we should try to delay calling of the callback to the backound task / process Steps function
+      this->_limitTriggeredCallback(); // TODO: this function is called from within a ISR in ESPStepperMotorServer thus we should try to delay calling of the callback to the background task / process Steps function
     }
   }
 }
@@ -256,23 +256,37 @@ bool ESP_FlexyStepper::isMovingTowardsHome()
 
 /*
  * connect the stepper object to the IO pins
- * stepPinNumber = IO pin number for the Step signale
+ * stepPinNumber = IO pin number for the Step signal
  * directionPinNumber = IO pin number for the direction signal
  */
-void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber)
+void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber, bool useOpenDrain)
 {
   this->stepPin = stepPinNumber;
   this->directionPin = directionPinNumber;
 
   // configure the IO pins
-  pinMode(stepPin, OUTPUT);
+  if (useOpenDrain)
+  {
+    pinMode(stepPin, OUTPUT_OPEN_DRAIN);
+  }
+  else
+  {
+    pinMode(stepPin, OUTPUT);
+  }
   digitalWrite(stepPin, LOW);
 
   if (directionPin < 255)
   {
-    pinMode(directionPin, OUTPUT);
+    if (useOpenDrain)
+    {
+      pinMode(directionPin, OUTPUT_OPEN_DRAIN);
+    }
+    else
+    {
+      pinMode(directionPin, OUTPUT);
+    }
+    digitalWrite(directionPin, LOW);
   }
-  digitalWrite(directionPin, LOW);
 }
 
 /*
@@ -280,7 +294,7 @@ void ESP_FlexyStepper::connectToPins(byte stepPinNumber, byte directionPinNumber
  * This is an optional step, set to -1 to disable this function (which is default)
  * the active state parameter defines if the external brake is configured in an active high (pin goes high to enable the brake) or active low (pin goes low to activate the brake) setup.
  * active high = 1, active low = 2
- * Will be set to ative high by default or if an invalid value is given
+ * Will be set to active high by default or if an invalid value is given
  */
 void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
 {
@@ -308,7 +322,7 @@ void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
 }
 
 /**
- * set a delay in milliseconds between stopping the stepper motor and engaging the pyhsical brake (trigger the eternal pin configured via setBrakePin() ).
+ * set a delay in milliseconds between stopping the stepper motor and engaging the physical brake (trigger the eternal pin configured via setBrakePin() ).
  * Default is 0, resulting in immediate triggering of the motor brake once the motor stops moving.
  * This value does NOT affect the triggering of the brake in cade of an emergency stop. In this case the brake will always get triggered without delay
  */
@@ -320,7 +334,7 @@ void ESP_FlexyStepper::setBrakeEngageDelayMs(unsigned long delay)
 /**
  * set a timeout in milliseconds after which the brake shall be released once triggered and no motion is performed by the stepper motor.
  * By default the value is -1 indicating, that the brake shall never be automatically released, as long as the stepper motor is not moving to a new position.
- * Value must be larger than 1 (Even though 1ms delay does probably not make any sense since physical brakes have a delay that is most likely higher than that just to engange)
+ * Value must be larger than 1 (Even though 1ms delay does probably not make any sense since physical brakes have a delay that is most likely higher than that just to engage)
  */
 void ESP_FlexyStepper::setBrakeReleaseDelayMs(signed long delay)
 {
@@ -393,7 +407,8 @@ float ESP_FlexyStepper::getCurrentPositionInMillimeters()
 //
 // set the current position of the motor in millimeters.
 // Do not confuse this function with setTargetPositionInMillimeters(), it does not directly cause a motor movement per se.
-// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInMillimeters() in the case that the value of currentPositionInMillimeters is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInMillimeters() with the same value as the setCurrentPositionInMillimeters() function directly before or after calling setCurrentPositionInMillimeters
+// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInMillimeters() in the case that the value of currentPositionInMillimeters is different from the target position of the stepper.
+// If this is not intended, you should call setTargetPositionInMillimeters() with the same value as the setCurrentPositionInMillimeters() function directly before or after calling setCurrentPositionInMillimeters
 //
 void ESP_FlexyStepper::setCurrentPositionInMillimeters(
     float currentPositionInMillimeters)
@@ -560,7 +575,8 @@ float ESP_FlexyStepper::getCurrentPositionInRevolutions()
 //
 // set the current position of the motor in revolutions, this does not move the
 // Do not confuse this function with setTargetPositionInRevolutions(), it does not directly cause a motor movement per se.
-// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInRevolutions() in the case that the value of currentPositionInRevolutions is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInRevolutions() with the same value as the setCurrentPositionInRevolutions() function directly before or after calling setCurrentPositionInRevolutions
+// NOTE: if you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInRevolutions() in the case that the value of currentPositionInRevolutions is different from the target position of the stepper.
+// If this is not intended, you should call setTargetPositionInRevolutions() with the same value as the setCurrentPositionInRevolutions() function directly before or after calling setCurrentPositionInRevolutions
 
 void ESP_FlexyStepper::setCurrentPositionInRevolutions(
     float currentPositionInRevolutions)
@@ -712,8 +728,8 @@ float ESP_FlexyStepper::getCurrentVelocityInRevolutionsPerSecond()
 // Do not confuse this function with setTargetPositionInMillimeters(), it does not directly cause a motor movement per se.
 // Notes:
 // This function should only be called when the motor is stopped
-// If you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInSteps() in the case that the value of currentPositionInSteps is different from the target position of the stepper. If this is not intended, you should call setTargetPositionInSteps() with the same value as the setCurrentPositionInSteps() function directly before or after calling setCurrentPositionInSteps
-
+// If you called one of the move functions before (and by that setting a target position internally) you might experience that the motor starts to move after calling setCurrentPositionInSteps() in the case that the value of currentPositionInSteps is different from the target position of the stepper.
+// If this is not intended, you should call setTargetPositionInSteps() with the same value as the setCurrentPositionInSteps() function directly before or after calling setCurrentPositionInSteps
 //
 void ESP_FlexyStepper::setCurrentPositionInSteps(long currentPositionInSteps)
 {
@@ -857,7 +873,7 @@ void ESP_FlexyStepper::registerEmergencyStopReleasedCallback(callbackFunction em
 }
 
 /**
- * start jogging (continous movement without a fixed target position)
+ * start jogging (continuous movement without a fixed target position)
  * uses the currently set speed and acceleration settings
  * to stop the motion call the stopJogging function.
  * Will also stop when the external limit switch has been triggered using setLimitSwitchActive() or when the emergencyStop function is triggered
@@ -869,7 +885,7 @@ void ESP_FlexyStepper::startJogging(signed char direction)
 }
 
 /**
- * Stop jopgging, basically an alias function for setTargetPositionToStop()
+ * Stop jogging, basically an alias function for setTargetPositionToStop()
  */
 void ESP_FlexyStepper::stopJogging()
 {
@@ -1019,7 +1035,7 @@ void ESP_FlexyStepper::moveRelativeInSteps(long distanceToMoveInSteps)
 // setup a move relative to the current position, units are in steps, no motion
 // occurs until processMove() is called
 //  Enter:  distanceToMoveInSteps = signed distance to move relative to the current
-//            positionin steps
+//            position in steps
 //
 void ESP_FlexyStepper::setTargetPositionRelativeInSteps(long distanceToMoveInSteps)
 {
@@ -1030,7 +1046,7 @@ void ESP_FlexyStepper::setTargetPositionRelativeInSteps(long distanceToMoveInSte
 // move to the given absolute position, units are in steps, this function does not
 // return until the move is complete
 //  Enter:  absolutePositionToMoveToInSteps = signed absolute position to move to
-//            in unitsof steps
+//            in units of steps
 //
 void ESP_FlexyStepper::moveToPositionInSteps(long absolutePositionToMoveToInSteps)
 {
@@ -1093,8 +1109,7 @@ void ESP_FlexyStepper::setTargetPositionToStop()
 
 //
 // if it is time, move one step
-//  Exit:  true returned if movement complete, false returned not a final target
-//           position yet
+//  Exit:  true returned if movement complete, false returned not a final target position yet
 //
 bool ESP_FlexyStepper::processMovement(void)
 {
@@ -1109,7 +1124,7 @@ bool ESP_FlexyStepper::processMovement(void)
     directionOfMotion = 0;
     targetPosition_InSteps = currentPosition_InSteps;
 
-    // activate brake (if configured) driectly due to emergency stop if not already active
+    // activate brake (if configured) directly due to emergency stop if not already active
     if (this->_isBrakeConfigured && !this->_isBrakeActive)
     {
       this->activateBrake();
@@ -1167,7 +1182,7 @@ bool ESP_FlexyStepper::processMovement(void)
         }
       }
 
-      // movement has been triggerd by goToLimitAndSetAsHome() function. so once the limit switch has been triggered we have reached the limit and need to set it as home
+      // movement has been triggered by goToLimitAndSetAsHome() function. so once the limit switch has been triggered we have reached the limit and need to set it as home
       if (this->isOnWayToHome)
       {
         this->setCurrentPositionAsHomeAndStop(); // clear isOnWayToHome flag and stop motion
@@ -1190,7 +1205,7 @@ bool ESP_FlexyStepper::processMovement(void)
         (this->disallowedDirection == 1 && distanceToTarget_Signed > 0) ||
         (this->disallowedDirection == -1 && distanceToTarget_Signed < 0))
     {
-      // limit switch is acitve and movement in request direction is not allowed
+      // limit switch is active and movement in request direction is not allowed
       currentStepPeriod_InUS = 0.0;
       nextStepPeriod_InUS = 0.0;
       directionOfMotion = 0;
@@ -1258,7 +1273,7 @@ bool ESP_FlexyStepper::processMovement(void)
   if (this->_isBrakeConfigured && this->_isBrakeActive)
   {
     this->deactivateBrake();
-    // TODO: For Feature Request https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16 we might need to set a timer and return here to prevent issuing the stepPin singal before the break is released
+    // TODO: For Feature Request https://github.com/pkerspe/ESP-StepperMotor-Server/issues/16 we might need to set a timer and return here to prevent issuing the stepPin signal before the break is released
   }
 
   // execute the step on the rising edge
@@ -1310,11 +1325,11 @@ bool ESP_FlexyStepper::processMovement(void)
 }
 
 /**
- * internal helper to determine if brake shall be acitvated (if configured at all) or if a delay needs to be set
+ * internal helper to determine if brake shall be activated (if configured at all) or if a delay needs to be set
  */
 void ESP_FlexyStepper::triggerBrakeIfNeededOrSetTimeout()
 {
-  // check if break is already set or a timeout has already beend set
+  // check if break is already set or a timeout has already been set
   if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_timeToEngangeBrake == LONG_MAX)
   {
     if (this->_brakeReleaseDelayMs > 0 && this->_hasMovementOccuredSinceLastBrakeRelease)

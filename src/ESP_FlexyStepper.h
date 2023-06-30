@@ -61,7 +61,7 @@ public:
   bool isStartedAsService(void);
 
   // IO setup and helper / debugging functions
-  void connectToPins(byte stepPinNumber, byte directionPinNumber = 255);
+  void connectToPins(byte stepPinNumber, byte directionPinNumber = 255, bool useOpenDrain = false);
   void setBrakePin(signed char brakePin, byte activeState = ESP_FlexyStepper::ACTIVE_HIGH);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
@@ -197,7 +197,7 @@ private:
   bool holdEmergencyStopUntilExplicitRelease;
   signed char directionTowardsHome;
   signed char lastStepDirectionBeforeLimitSwitchTrigger;
-  // true if the current stepper positon equals the homing position
+  // true if the current stepper position equals the homing position
   bool isCurrentlyHomed;
   bool isOnWayToHome = false;
   bool isOnWayToLimit = false;
