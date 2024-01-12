@@ -74,8 +74,8 @@ public:
   void activateBrake(void);
   void deactivateBrake(void);
   bool isBrakeActive(void);
-  void enabledriver(void);
-  void disabledriver(void);
+  void enableDriver(void);
+  void disableDriver(void);
   bool isDriverEnabled(void);
   // the central function to calculate the next movment step signal
   bool processMovement(void);
