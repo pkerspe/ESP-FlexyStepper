@@ -72,7 +72,7 @@ public:
   void releaseEmergencyStop(void);
   void activateBrake(void);
   void deactivateBrake(void);
-  bool isBakeActive(void);
+  bool isBrakeActive(void);
   // the central function to calculate the next movment step signal
   bool processMovement(void);
 

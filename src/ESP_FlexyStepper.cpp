@@ -324,7 +324,7 @@ void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
 /**
  * set a delay in milliseconds between stopping the stepper motor and engaging the physical brake (trigger the eternal pin configured via setBrakePin() ).
  * Default is 0, resulting in immediate triggering of the motor brake once the motor stops moving.
- * This value does NOT affect the triggering of the brake in cade of an emergency stop. In this case the brake will always get triggered without delay
+ * This value does NOT affect the triggering of the brake in case of an emergency stop. In this case the brake will always get triggered without delay
  */
 void ESP_FlexyStepper::setBrakeEngageDelayMs(unsigned long delay)
 {
@@ -377,7 +377,7 @@ void ESP_FlexyStepper::deactivateBrake()
   }
 }
 
-bool ESP_FlexyStepper::isBakeActive()
+bool ESP_FlexyStepper::isBrakeActive()
 {
   return this->_isBrakeActive;
 }
