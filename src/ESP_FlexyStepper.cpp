@@ -321,6 +321,37 @@ void ESP_FlexyStepper::setBrakePin(signed char brakePin, byte activeState)
   }
 }
 
+/*
+ * setup an IO pin to enable the motors driver
+ * This is an optional step, set to -1 to disable this function (which is default)
+ * the active state parameter defines if the enable pin is configured in an active high (pin goes high to enable the driver) or active low (pin goes low to activate the driver) setup.
+ * active high = 1, active low = 2
+ * Will be set to active high by default or if an invalid value is given
+ */
+void ESP_FlexyStepper::setEnablePin(signed char enablePin, byte activeState)
+{
+  this->enablePin = enablePin;
+  if (activeState == ESP_FlexyStepper::ACTIVE_HIGH || activeState == ESP_FlexyStepper::ACTIVE_LOW)
+  {
+    this->enablePinActiveState = activeState;
+  }
+  else
+  {
+    this->enablePinActiveState = ESP_FlexyStepper::ACTIVE_LOW;
+  }
+
+  if(this->enablePin >= 0)
+  {
+    // configure the IO pins
+    pinMode((uint8_t)this->enablePin, OUTPUT);
+    _isEnableConfigured = true;
+  }
+  else
+  {
+    _isEnableConfigured = false;
+  }
+}
+
 /**
  * set a delay in milliseconds between stopping the stepper motor and engaging the physical brake (trigger the eternal pin configured via setBrakePin() ).
  * Default is 0, resulting in immediate triggering of the motor brake once the motor stops moving.
@@ -380,6 +411,35 @@ void ESP_FlexyStepper::deactivateBrake()
 bool ESP_FlexyStepper::isBrakeActive()
 {
   return this->_isBrakeActive;
+}
+
+/**
+ * activate (engage) the driver (if any is configured, otherwise will do nothing)
+ */
+void ESP_FlexyStepper::enabledriver(void)
+{
+if (this->_isEnableConfigured)
+  {
+    digitalWrite((uint8_t)this->enablePin, (this->enablePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
+    this->_isDriverEnabled = true;
+  }
+}
+
+/**
+ * deactivate (release) the driver (if any is configured, otherwise will do nothing)
+ */
+void ESP_FlexyStepper::disabledriver(void)
+{
+  if (this->_isEnableConfigured)
+  {
+    digitalWrite((uint8_t)this->enablePin, (this->enablePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 0 : 1);
+    this->_isDriverEnabled = false;
+  }
+}
+
+bool ESP_FlexyStepper::isDriverEnabled(void)
+{
+  return this->_isDriverEnabled;
 }
 
 // ---------------------------------------------------------------------------------

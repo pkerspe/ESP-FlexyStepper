@@ -63,6 +63,7 @@ public:
   // IO setup and helper / debugging functions
   void connectToPins(byte stepPinNumber, byte directionPinNumber = 255, bool useOpenDrain = false);
   void setBrakePin(signed char brakePin, byte activeState = ESP_FlexyStepper::ACTIVE_HIGH);
+  void setEnablePin(signed char enablePin, byte activeState = ESP_FlexyStepper::ACTIVE_LOW);
   long getTaskStackHighWaterMark(void);
   void clearLimitSwitchActive(void);
   bool motionComplete();
@@ -73,6 +74,9 @@ public:
   void activateBrake(void);
   void deactivateBrake(void);
   bool isBrakeActive(void);
+  void enabledriver(void);
+  void disabledriver(void);
+  bool isDriverEnabled(void);
   // the central function to calculate the next movment step signal
   bool processMovement(void);
 
@@ -167,16 +171,20 @@ private:
 
   byte stepPin;
   signed char brakePin = -1;
+  signed char enablePin = -1;
   byte brakePinActiveState = ACTIVE_HIGH;
+  byte enablePinActiveState = ACTIVE_HIGH;
   unsigned long _brakeEngageDelayMs = 0;
   signed long _brakeReleaseDelayMs = -1;
   unsigned long _timeToEngangeBrake = LONG_MAX;
   unsigned long _timeToReleaseBrake = LONG_MAX;
   bool _isBrakeConfigured = false;
+  bool _isEnableConfigured = false;
   bool _hasMovementOccuredSinceLastBrakeRelease = true;
 
   byte directionPin;
   bool _isBrakeActive = false;
+  bool _isDriverEnabled = false;
   float stepsPerMillimeter;
   float stepsPerRevolution;
   int directionOfMotion;
