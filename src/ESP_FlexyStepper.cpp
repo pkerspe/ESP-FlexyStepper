@@ -610,6 +610,38 @@ float ESP_FlexyStepper::getCurrentVelocityInMillimetersPerSecond()
   return (getCurrentVelocityInStepsPerSecond() / stepsPerMillimeter);
 }
 
+
+float ESP_FlexyStepper::getCurrentAccelerationInStepsPerSecondPerSecond()
+{
+  return acceleration_InStepsPerSecondPerSecond;
+}
+
+float ESP_FlexyStepper::getCurrentAccelerationInRevolutionsPerSecondPerSecond()
+{
+  return acceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
+}
+
+float ESP_FlexyStepper::getCurrentAccelerationInMillimetersPerSecondPerSecond()
+{
+  return getCurrentAccelerationInStepsPerSecondPerSecond() / stepsPerMillimeter;
+}
+
+float ESP_FlexyStepper::getCurrentDescelerationInStepsPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond;
+}
+
+float ESP_FlexyStepper::getCurrentDescelerationInRevolutionsPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution; 
+}
+
+float ESP_FlexyStepper::getCurrentDescelerationInMillimetersPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
+}
+
+
 // ---------------------------------------------------------------------------------
 //                     Public functions with units in revolutions
 // ---------------------------------------------------------------------------------
