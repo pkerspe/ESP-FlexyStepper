@@ -416,7 +416,7 @@ bool ESP_FlexyStepper::isBrakeActive()
 /**
  * activate (engage) the driver (if any is configured, otherwise will do nothing)
  */
-void ESP_FlexyStepper::enabledriver(void)
+void ESP_FlexyStepper::enableDriver(void)
 {
 if (this->_isEnableConfigured)
   {
@@ -428,7 +428,7 @@ if (this->_isEnableConfigured)
 /**
  * deactivate (release) the driver (if any is configured, otherwise will do nothing)
  */
-void ESP_FlexyStepper::disabledriver(void)
+void ESP_FlexyStepper::disableDriver(void)
 {
   if (this->_isEnableConfigured)
   {
