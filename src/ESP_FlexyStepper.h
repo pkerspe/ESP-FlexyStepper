@@ -109,13 +109,13 @@ public:
   float getCurrentVelocityInRevolutionsPerSecond();
   float getCurrentVelocityInMillimetersPerSecond(void);
 
-  float getCurrentAccelerationInStepsPerSecondPerSecond();
-  float getCurrentAccelerationInRevolutionsPerSecondPerSecond();
-  float getCurrentAccelerationInMillimetersPerSecondPerSecond();
+  float getConfiguredAccelerationInStepsPerSecondPerSecond();
+  float getConfiguredAccelerationInRevolutionsPerSecondPerSecond();
+  float getConfiguredAccelerationInMillimetersPerSecondPerSecond();
 
-  float getCurrentDescelerationInStepsPerSecondPerSecond();
-  float getCurrentDescelerationInRevolutionsPerSecondPerSecond();
-  float getCurrentDescelerationInMillimetersPerSecondPerSecond();
+  float getConfiguredDescelerationInStepsPerSecondPerSecond();
+  float getConfiguredDescelerationInRevolutionsPerSecondPerSecond();
+  float getConfiguredDescelerationInMillimetersPerSecondPerSecond();
 
   // positioning functions
   void setCurrentPositionInSteps(long currentPositionInSteps);

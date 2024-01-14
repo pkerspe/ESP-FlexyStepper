@@ -610,33 +610,36 @@ float ESP_FlexyStepper::getCurrentVelocityInMillimetersPerSecond()
   return (getCurrentVelocityInStepsPerSecond() / stepsPerMillimeter);
 }
 
+/*
+access the acceleration/deceleration parameters set by user 
+*/
 
-float ESP_FlexyStepper::getCurrentAccelerationInStepsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredAccelerationInStepsPerSecondPerSecond()
 {
   return acceleration_InStepsPerSecondPerSecond;
 }
 
-float ESP_FlexyStepper::getCurrentAccelerationInRevolutionsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredAccelerationInRevolutionsPerSecondPerSecond()
 {
   return acceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
 }
 
-float ESP_FlexyStepper::getCurrentAccelerationInMillimetersPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredAccelerationInMillimetersPerSecondPerSecond()
 {
-  return getCurrentAccelerationInStepsPerSecondPerSecond() / stepsPerMillimeter;
+  return acceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }
 
-float ESP_FlexyStepper::getCurrentDescelerationInStepsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDescelerationInStepsPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond;
 }
 
-float ESP_FlexyStepper::getCurrentDescelerationInRevolutionsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDescelerationInRevolutionsPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution; 
 }
 
-float ESP_FlexyStepper::getCurrentDescelerationInMillimetersPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDescelerationInMillimetersPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }
