@@ -340,7 +340,7 @@ void ESP_FlexyStepper::setEnablePin(signed char enablePin, byte activeState)
     this->enablePinActiveState = ESP_FlexyStepper::ACTIVE_LOW;
   }
 
-  if(this->enablePin >= 0)
+  if (this->enablePin >= 0)
   {
     // configure the IO pins
     pinMode((uint8_t)this->enablePin, OUTPUT);
@@ -418,7 +418,7 @@ bool ESP_FlexyStepper::isBrakeActive()
  */
 void ESP_FlexyStepper::enableDriver(void)
 {
-if (this->_isEnableConfigured)
+  if (this->_isEnableConfigured)
   {
     digitalWrite((uint8_t)this->enablePin, (this->enablePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
     this->_isDriverEnabled = true;
@@ -611,7 +611,7 @@ float ESP_FlexyStepper::getCurrentVelocityInMillimetersPerSecond()
 }
 
 /*
-access the acceleration/deceleration parameters set by user 
+access the acceleration/deceleration parameters set by user
 */
 
 float ESP_FlexyStepper::getConfiguredAccelerationInStepsPerSecondPerSecond()
@@ -636,7 +636,7 @@ float ESP_FlexyStepper::getConfiguredDescelerationInStepsPerSecondPerSecond()
 
 float ESP_FlexyStepper::getConfiguredDescelerationInRevolutionsPerSecondPerSecond()
 {
-  return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution; 
+  return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
 }
 
 float ESP_FlexyStepper::getConfiguredDescelerationInMillimetersPerSecondPerSecond()
