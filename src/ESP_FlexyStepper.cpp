@@ -631,17 +631,17 @@ float ESP_FlexyStepper::getConfiguredAccelerationInMillimetersPerSecondPerSecond
   return acceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }
 
-float ESP_FlexyStepper::getConfiguredDescelerationInStepsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDecelerationInStepsPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond;
 }
 
-float ESP_FlexyStepper::getConfiguredDescelerationInRevolutionsPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDecelerationInRevolutionsPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
 }
 
-float ESP_FlexyStepper::getConfiguredDescelerationInMillimetersPerSecondPerSecond()
+float ESP_FlexyStepper::getConfiguredDecelerationInMillimetersPerSecondPerSecond()
 {
   return deceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }

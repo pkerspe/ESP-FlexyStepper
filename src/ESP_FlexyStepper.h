@@ -113,9 +113,9 @@ public:
   float getConfiguredAccelerationInRevolutionsPerSecondPerSecond();
   float getConfiguredAccelerationInMillimetersPerSecondPerSecond();
 
-  float getConfiguredDescelerationInStepsPerSecondPerSecond();
-  float getConfiguredDescelerationInRevolutionsPerSecondPerSecond();
-  float getConfiguredDescelerationInMillimetersPerSecondPerSecond();
+  float getConfiguredDecelerationInStepsPerSecondPerSecond();
+  float getConfiguredDecelerationInRevolutionsPerSecondPerSecond();
+  float getConfiguredDecelerationInMillimetersPerSecondPerSecond();
 
   // positioning functions
   void setCurrentPositionInSteps(long currentPositionInSteps);
