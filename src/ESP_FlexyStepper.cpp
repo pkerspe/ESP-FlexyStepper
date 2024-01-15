@@ -93,17 +93,16 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 // TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 bool ESP_FlexyStepper::startAsService(int coreNumber)
 {
-
-  if (coreNumber == 1)
-  {
-#if ! (CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2)
-    disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
-#endif
-  }
-  else if (coreNumber == 0)
+  if (coreNumber == 0)
   {
     disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
   }
+#if !(CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2)
+  else if (coreNumber == 1)
+  {
+    disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  }
+#endif
   else
   {
     // invalid core number given
@@ -645,7 +644,6 @@ float ESP_FlexyStepper::getConfiguredDecelerationInMillimetersPerSecondPerSecond
 {
   return deceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }
-
 
 // ---------------------------------------------------------------------------------
 //                     Public functions with units in revolutions
