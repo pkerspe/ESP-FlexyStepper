@@ -93,15 +93,16 @@ ESP_FlexyStepper::~ESP_FlexyStepper()
 // TODO: use https://github.com/nrwiersma/ESP8266Scheduler/blob/master/examples/simple/simple.ino for ESP8266
 bool ESP_FlexyStepper::startAsService(int coreNumber)
 {
-
-  if (coreNumber == 1)
-  {
-    disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
-  }
-  else if (coreNumber == 0)
+  if (coreNumber == 0)
   {
     disableCore0WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
   }
+#if !(CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S2)
+  else if (coreNumber == 1)
+  {
+    disableCore1WDT(); // we have to disable the Watchdog timer to prevent it from rebooting the ESP all the time another option would be to add a vTaskDelay but it would slow down the stepper
+  }
+#endif
   else
   {
     // invalid core number given
@@ -340,7 +341,7 @@ void ESP_FlexyStepper::setEnablePin(signed char enablePin, byte activeState)
     this->enablePinActiveState = ESP_FlexyStepper::ACTIVE_LOW;
   }
 
-  if(this->enablePin >= 0)
+  if (this->enablePin >= 0)
   {
     // configure the IO pins
     pinMode((uint8_t)this->enablePin, OUTPUT);
@@ -418,7 +419,7 @@ bool ESP_FlexyStepper::isBrakeActive()
  */
 void ESP_FlexyStepper::enableDriver(void)
 {
-if (this->_isEnableConfigured)
+  if (this->_isEnableConfigured)
   {
     digitalWrite((uint8_t)this->enablePin, (this->enablePinActiveState == ESP_FlexyStepper::ACTIVE_HIGH) ? 1 : 0);
     this->_isDriverEnabled = true;
@@ -608,6 +609,40 @@ float ESP_FlexyStepper::getTargetPositionInMillimeters()
 float ESP_FlexyStepper::getCurrentVelocityInMillimetersPerSecond()
 {
   return (getCurrentVelocityInStepsPerSecond() / stepsPerMillimeter);
+}
+
+/*
+access the acceleration/deceleration parameters set by user
+*/
+
+float ESP_FlexyStepper::getConfiguredAccelerationInStepsPerSecondPerSecond()
+{
+  return acceleration_InStepsPerSecondPerSecond;
+}
+
+float ESP_FlexyStepper::getConfiguredAccelerationInRevolutionsPerSecondPerSecond()
+{
+  return acceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
+}
+
+float ESP_FlexyStepper::getConfiguredAccelerationInMillimetersPerSecondPerSecond()
+{
+  return acceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
+}
+
+float ESP_FlexyStepper::getConfiguredDecelerationInStepsPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond;
+}
+
+float ESP_FlexyStepper::getConfiguredDecelerationInRevolutionsPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond / stepsPerRevolution;
+}
+
+float ESP_FlexyStepper::getConfiguredDecelerationInMillimetersPerSecondPerSecond()
+{
+  return deceleration_InStepsPerSecondPerSecond / stepsPerMillimeter;
 }
 
 // ---------------------------------------------------------------------------------
