@@ -30,11 +30,3 @@
 *.exe
 *.out
 *.app
-
-src/main.cpp
-platformio.ini
-
-.pio
-.vscode
-src/main_test.cpp
-src/main_test.cpp_
