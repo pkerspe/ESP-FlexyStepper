@@ -17,162 +17,389 @@
 
 #pragma once
 
+#include <vector>
 #include <cstdint>
-#include <climits>
 #include <functional>
-#include <esp_task.h>
 
 #include "motor/interface/ILimiter.hpp"
 #include "motor/driver/interface/IDriver.hpp"
 
+/**
+ * @namespace motor
+ * @brief Motor namespace
+ */
 namespace motor {
 
+using Limiters = std::vector<ILimiterPtr>;
 using CallbackFunction = std::function<void()>;
-using PositionCallbackFunction = std::function<void(long)>;
+using PositionCallbackFunction = std::function<void(int32_t)>;
 
+/**
+ * @class MotorController
+ * @brief Class for controlling a stepper motor
+ */
 class MotorController {
 public:
-  explicit MotorController(IDriverPtr motorDriver);
+  explicit MotorController(IDriverPtr motorDriver, ILimiterPtr beginLimiter = nullptr, ILimiterPtr endLimiter = nullptr);
 
 public:
-  void setHomeLimitSwitch(ILimiterPtr externalAction);
-
-public:
+  /**
+   * @brief Set a callback function that will be called when the motor reaches the home position
+   * @param homeReachedCallbackFunction
+   */
   void registerHomeReachedCallback(CallbackFunction homeReachedCallbackFunction);
+  /**
+   * @brief Set a callback function that will be called when the motor reaches the limit switch
+   * @param limitSwitchTriggeredCallbackFunction
+   */
   void registerLimitReachedCallback(CallbackFunction limitSwitchTriggeredCallbackFunction);
+  /**
+   * @brief Set a callback function that will be called when the motor reaches the target position
+   * @param targetPositionReachedCallbackFunction
+   */
   void registerTargetPositionReachedCallback(PositionCallbackFunction targetPositionReachedCallbackFunction);
 
 public:
-  void enableDriver();
-  void disableDriver();
-
-public:
+  /**
+   * return true if homed
+   * @return
+   */
+  [[nodiscard]] bool isHomed() const;
+  /**
+   * return true if driver is enabled
+   * @return
+   */
   [[nodiscard]] bool isDriverEnabled() const;
+  /**
+   * return true if motion is complete
+   * @return
+   */
   [[nodiscard]] bool isMotionComplete() const;
-  [[nodiscard]] bool isMovingTowardsHome() const;
 
 public:
-  void clearLimitSwitchActive();
+  /**
+   * get direction of motion
+   * @return
+   */
   [[nodiscard]] int8_t getDirectionOfMotion() const;
 
 public:
-  void setStepsPerMillimeter(float motorStepPerMillimeter);
-  void setStepsPerRevolution(float motorStepPerRevolution);
-  void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
-  void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond);
-  void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond);
-  void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond);
-  void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond);
-  void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond);
-  void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond);
-  void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
-  void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
-  void setDirectionToHome(int8_t directionTowardHome);
-  void setLimitSwitchActive(int8_t limitSwitchType);
-
-public:
-  [[nodiscard]] float getCurrentVelocityInStepsPerSecond() const;
-  [[nodiscard]] float getCurrentVelocityInRevolutionsPerSecond() const;
-  [[nodiscard]] float getCurrentVelocityInMillimetersPerSecond() const;
-
-public:
-  [[nodiscard]] float getConfiguredAccelerationInStepsPerSecondPerSecond() const;
-  [[nodiscard]] float getConfiguredAccelerationInRevolutionsPerSecondPerSecond() const;
-  [[nodiscard]] float getConfiguredAccelerationInMillimetersPerSecondPerSecond() const;
-
-public:
-  [[nodiscard]] float getConfiguredDecelerationInStepsPerSecondPerSecond() const;
-  [[nodiscard]] float getConfiguredDecelerationInRevolutionsPerSecondPerSecond() const;
-  [[nodiscard]] float getConfiguredDecelerationInMillimetersPerSecondPerSecond() const;
-
-public:
-  void setCurrentPositionInSteps(long currentPositionInSteps);
-  void setCurrentPositionInMillimeters(float currentPositionInMillimeters);
-  void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
-
-public:
-  [[nodiscard]] long getCurrentPositionInSteps() const;
-  [[nodiscard]] float getCurrentPositionInRevolutions() const;
   /**
-   * @return position in millimeters
+   * get target position in steps
+   * @return
    */
-  [[nodiscard]] float getCurrentPositionInMillimeters() const;
-
-public:
-  void startJogging(int8_t direction);
-  void stopJogging();
-  void goToLimitAndSetAsHome(CallbackFunction const &callbackFunctionForHome = nullptr, long maxDistanceToMoveInSteps = 2000000000L);
-  void goToLimit(int8_t direction, CallbackFunction const &callbackFunctionForLimit = nullptr);
-
-public:
-  void setCurrentPositionAsHomeAndStop();
-  void setTargetPositionToStop();
+  [[nodiscard]] int32_t getTargetPositionInSteps() const;
+  /**
+   * get current position in steps
+   * @return
+   */
+  [[nodiscard]] int32_t getCurrentPositionInSteps() const;
+  /**
+   * get distance to target
+   * @return
+   */
   [[nodiscard]] int32_t getDistanceToTargetSigned() const;
 
 public:
-  void setTargetPositionInSteps(long absolutePositionToMoveToInSteps);
-  void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
-  void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
-  void setTargetPositionRelativeInSteps(long distanceToMoveInSteps);
-  void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
-  void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
-
-public:
-  [[nodiscard]] int32_t getTargetPositionInSteps() const;
+  /**
+   * get target position in millimeters
+   * @return
+   */
   [[nodiscard]] float getTargetPositionInMillimeters() const;
+  /**
+   * get target position in revolutions
+   * @return
+   */
   [[nodiscard]] float getTargetPositionInRevolutions() const;
 
 public:
-  void moveToPositionInSteps(long absolutePositionToMoveToInSteps);
+  /**
+   * get current position in revolutions
+   * @return
+   */
+  [[nodiscard]] float getCurrentPositionInMillimeters() const;
+  /**
+   * get current position in millimeters
+   * @return
+   */
+  [[nodiscard]] float getCurrentPositionInRevolutions() const;
+
+public:
+  /**
+   * get current velocity in steps per second
+   * @return
+   */
+  [[nodiscard]] float getCurrentVelocityInStepsPerSecond() const;
+  /**
+   * get current velocity in millimeters per second
+   * @return
+   */
+  [[nodiscard]] float getCurrentVelocityInMillimetersPerSecond() const;
+  /**
+   * get current velocity in revolutions per second
+   * @return
+   */
+  [[nodiscard]] float getCurrentVelocityInRevolutionsPerSecond() const;
+
+public:
+  /**
+   * get configured acceleration in steps per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredAccelerationInStepsPerSecondPerSecond() const;
+  /**
+   * get configured acceleration in millimeters per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredAccelerationInMillimetersPerSecondPerSecond() const;
+  /**
+   * get configured acceleration in revolutions per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredAccelerationInRevolutionsPerSecondPerSecond() const;
+
+public:
+  /**
+   * get configured deceleration in steps per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredDecelerationInStepsPerSecondPerSecond() const;
+  /**
+   * get configured deceleration in millimeters per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredDecelerationInMillimetersPerSecondPerSecond() const;
+  /**
+   * get configured deceleration in revolutions per second per second
+   * @return
+   */
+  [[nodiscard]] float getConfiguredDecelerationInRevolutionsPerSecondPerSecond() const;
+
+public:
+  /**
+   * set steps per millimeter
+   * @param motorStepPerMillimeter
+   */
+  void setStepsPerMillimeter(float motorStepPerMillimeter);
+  /**
+   * set steps per revolution
+   * @param motorStepPerRevolution
+   */
+  void setStepsPerRevolution(float motorStepPerRevolution);
+
+public:
+  /**
+   * set speed in steps per second
+   * @param speedInStepsPerSecond
+   */
+  void setSpeedInStepsPerSecond(float speedInStepsPerSecond);
+  /**
+   * set speed in revolutions per second
+   * @param speedInRevolutionsPerSecond
+   */
+  void setSpeedInMillimetersPerSecond(float speedInMillimetersPerSecond);
+  /**
+   * set speed in millimeters per second
+   * @param speedInMillimetersPerSecond
+   */
+  void setSpeedInRevolutionsPerSecond(float speedInRevolutionsPerSecond);
+
+public:
+  /**
+   * set acceleration in steps per second per second
+   * @param accelerationInStepsPerSecondPerSecond
+   */
+  void setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
+  /**
+   * set acceleration in millimeters per second per second
+   * @param accelerationInMillimetersPerSecondPerSecond
+   */
+  void setAccelerationInMillimetersPerSecondPerSecond(float accelerationInMillimetersPerSecondPerSecond);
+  /**
+   * set acceleration in revolutions per second per second
+   * @param accelerationInRevolutionsPerSecondPerSecond
+   */
+  void setAccelerationInRevolutionsPerSecondPerSecond(float accelerationInRevolutionsPerSecondPerSecond);
+
+public:
+  /**
+   * set deceleration in steps per second per second
+   * @param decelerationInStepsPerSecondPerSecond
+   */
+  void setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
+  /**
+   * set deceleration in millimeters per second per second
+   * @param decelerationInMillimetersPerSecondPerSecond
+   */
+  void setDecelerationInMillimetersPerSecondPerSecond(float decelerationInMillimetersPerSecondPerSecond);
+  /**
+   * set deceleration in revolutions per second per second
+   * @param decelerationInRevolutionsPerSecondPerSecond
+   */
+  void setDecelerationInRevolutionsPerSecondPerSecond(float decelerationInRevolutionsPerSecondPerSecond);
+
+public:
+  /**
+   * set current position in steps
+   * @param currentPositionInSteps
+   */
+  void setCurrentPositionInSteps(int32_t currentPositionInSteps);
+  /**
+   * set current position in millimeters
+   * @param currentPositionInMillimeters
+   */
+  void setCurrentPositionInMillimeters(float currentPositionInMillimeters);
+  /**
+   * set current position in revolutions
+   * @param currentPositionInRevolutions
+   */
+  void setCurrentPositionInRevolutions(float currentPositionInRevolutions);
+  /**
+   * set current position as home and stop
+   */
+  void setCurrentPositionAsHomeAndStop();
+
+public:
+  /**
+   * set target position in steps
+   * @param absolutePositionToMoveToInSteps
+   */
+  void setTargetPositionToStop();
+  /**
+   * set target position in steps
+   * @param absolutePositionToMoveToInSteps
+   */
+  void setTargetPositionInSteps(int32_t absolutePositionToMoveToInSteps);
+  /**
+   * set target position in millimeters
+   * @param absolutePositionToMoveToInMillimeters
+   */
+  void setTargetPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
+  /**
+   * set target position in revolutions
+   * @param absolutePositionToMoveToInRevolutions
+   */
+  void setTargetPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
+  /**
+   * set target position relative to current position in steps
+   * @param distanceToMoveInSteps
+   */
+  void setTargetPositionRelativeInSteps(int32_t distanceToMoveInSteps);
+  /**
+   * set target position relative to current position in millimeters
+   * @param distanceToMoveInMillimeters
+   */
+  void setTargetPositionRelativeInMillimeters(float distanceToMoveInMillimeters);
+  /**
+   * set target position relative to current position in revolutions
+   * @param distanceToMoveInRevolutions
+   */
+  void setTargetPositionRelativeInRevolutions(float distanceToMoveInRevolutions);
+
+public:
+  /**
+   * enable driver
+   */
+  void enableDriver();
+  /**
+   * disable driver
+   */
+  void disableDriver();
+
+public:
+  /**
+   * start jogging
+   * @param direction
+   */
+  void startJogging(int8_t direction);
+  /**
+   * stop jogging
+   */
+  void stopJogging();
+
+public:
+  /**
+   * Go to begin limit.
+   * Blocked until motion is complete.
+   */
+  void goToLimit(int8_t direction, float speedInStepsPerSecond);
+  /**
+   * Go to end limit and set as home.
+   * Blocked until motion is complete.
+   */
+  void goToLimitAndSetAsHome(int8_t direction, float speedInStepsPerSecond);
+
+public:
+  /**
+   * Move to position in steps.
+   * Blocked until motion is complete.
+   * @param absolutePositionToMoveToInSteps
+   */
+  void moveToPositionInSteps(int32_t absolutePositionToMoveToInSteps);
+  /**
+   * Move to position in millimeters.
+   * Blocked until motion is complete.
+   * @param absolutePositionToMoveToInMillimeters
+   */
   void moveToPositionInMillimeters(float absolutePositionToMoveToInMillimeters);
+  /**
+   * Move to position in revolutions.
+   * Blocked until motion is complete.
+   * @param absolutePositionToMoveToInRevolutions
+   */
   void moveToPositionInRevolutions(float absolutePositionToMoveToInRevolutions);
-  void moveRelativeInSteps(long distanceToMoveInSteps);
+  /**
+   * Move to position relative to current position in steps. Blocked until motion is complete.
+   * Blocked until motion is complete.
+   * @param distanceToMoveInSteps
+   */
+  void moveRelativeInSteps(int32_t distanceToMoveInSteps);
+  /**
+   * Move to position relative to current position in millimeters.
+   * Blocked until motion is complete.
+   * @param distanceToMoveInMillimeters
+   */
   void moveRelativeInMillimeters(float distanceToMoveInMillimeters);
+  /**
+   * Move to position relative to current position in revolutions
+   * Blocked until motion is complete.
+   * @param distanceToMoveInRevolutions
+   */
   void moveRelativeInRevolutions(float distanceToMoveInRevolutions);
+  /**
+   * Move to home
+   * Blocked until motion is complete.
+   * @param speedInStepsPerSecond
+   * @return
+   */
+  void moveToHome();
 
 public:
-  bool moveToHomeInSteps(int8_t directionTowardHome, float speedInStepsPerSecond, long maxDistanceToMoveInSteps);
-  bool moveToHomeInMillimeters(int8_t directionTowardHome, float speedInMillimetersPerSecond, long maxDistanceToMoveInMillimeters);
-  bool moveToHomeInRevolutions(int8_t directionTowardHome, float speedInRevolutionsPerSecond, long maxDistanceToMoveInRevolutions);
-
-public:
-  // the central function to calculate the next movment step signal
+  /**
+   * Process movement.
+   * Return true if movement is not complete.
+   * @return
+   */
   bool processMovement();
 
 private:
-  static void taskRunner(void *parameter);
+  Limiters m_limiters;
+  IDriverPtr m_motorDriver;
 
 private:
-  void determinePeriodOfNextStep();
+  CallbackFunction m_homeReachedCallback;
+  CallbackFunction m_limitTriggeredCallback;
+  CallbackFunction m_callbackFunctionForGoToLimit;
+  PositionCallbackFunction m_targetPositionReachedCallback;
 
 private:
-  static const int8_t LIMIT_SWITCH_BEGIN = -1;
-  static const int8_t LIMIT_SWITCH_END = 1;
-  static const int8_t LIMIT_SWITCH_COMBINED_BEGIN_AND_END = 2;
-
-private:
-  IDriverPtr m_motorDriver = nullptr;
-  ILimiterPtr m_homeLimitSwitch = nullptr;
-
-private:
-  CallbackFunction m_homeReachedCallback = nullptr;
-  CallbackFunction m_limitTriggeredCallback = nullptr;
-  CallbackFunction m_callbackFunctionForGoToLimit = nullptr;
-  PositionCallbackFunction m_targetPositionReachedCallback = nullptr;
-
-private:
-  int8_t m_activeLimitSwitch;
   int8_t m_directionOfMotion;
   int8_t m_disallowedDirection;
-  int8_t m_directionTowardsHome;
-  int8_t m_lastStepDirectionBeforeLimitSwitchTrigger;
 
 private:
-  bool m_isOnWayToHome = false;
-  bool m_isOnWayToLimit = false;
-  bool m_isCurrentlyHomed;
+  bool m_isOnWayToHome;
   bool m_limitSwitchCheckPerformed;
-  bool m_firstProcessingAfterTargetReached = true;
+  bool m_firstProcessingAfterTargetReached;
 
 private:
   int32_t m_targetPosition_InSteps;
@@ -194,6 +421,19 @@ private:
   float m_minimumPeriodForAStoppedMotion;
   float m_acceleration_InStepsPerSecondPerSecond;
   float m_deceleration_InStepsPerSecondPerSecond;
+
+private:
+  /**
+   * Return true if movement is any limit switch triggered
+   * @return
+   */
+  [[nodiscard]] bool checkingActivityOfLimiters();
+
+private:
+  /**
+   * Determine period of next step
+   */
+  void determinePeriodOfNextStep();
 };
 
 }
