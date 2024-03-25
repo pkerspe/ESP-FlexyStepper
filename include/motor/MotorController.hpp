@@ -437,3 +437,7 @@ private:
 };
 
 }
+
+#include <memory>
+
+using MotorControllerPtr = std::unique_ptr<motor::MotorController>;
