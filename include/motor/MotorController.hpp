@@ -99,6 +99,11 @@ public:
    * @return
    */
   [[nodiscard]] int32_t getDistanceToTargetSigned() const;
+  /**
+   * get distance to target
+   * @return
+   */
+  [[nodiscard]] uint32_t getDistanceToTargetUnsigned() const;
 
 public:
   /**
@@ -174,6 +179,9 @@ public:
    * @return
    */
   [[nodiscard]] float getConfiguredDecelerationInRevolutionsPerSecondPerSecond() const;
+
+public:
+  void setMicrostep(uint32_t microstep);
 
 public:
   /**

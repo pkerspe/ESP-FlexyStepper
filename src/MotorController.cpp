@@ -91,6 +91,16 @@ int32_t MotorController::getDistanceToTargetSigned() const {
   return (m_targetPosition_InSteps - m_currentPosition_InSteps);
 }
 
+uint32_t MotorController::getDistanceToTargetUnsigned() const {
+  auto const distanceToTarget = getDistanceToTargetSigned();
+
+  if (distanceToTarget < 0) {
+    return static_cast<uint32_t>(-distanceToTarget);
+  }
+
+  return static_cast<uint32_t>(distanceToTarget);
+}
+
 float MotorController::getTargetPositionInMillimeters() const {
   auto const targetPosition_InSteps = getTargetPositionInSteps();
   auto const targetPosition_InMillimeters = static_cast<float>(targetPosition_InSteps) / m_stepsPerMillimeter;
@@ -169,6 +179,10 @@ float MotorController::getConfiguredDecelerationInRevolutionsPerSecondPerSecond(
   return m_deceleration_InStepsPerSecondPerSecond / m_stepsPerRevolution;
 }
 
+void MotorController::setMicrostep(uint32_t microstep) {
+  m_motorDriver->setMicrostep(microstep);
+}
+
 void MotorController::setStepsPerMillimeter(float const motorStepsPerMillimeter) {
   m_stepsPerMillimeter = motorStepsPerMillimeter;
 }
@@ -178,7 +192,10 @@ void MotorController::setStepsPerRevolution(float const motorStepPerRevolution) 
 }
 
 void MotorController::setSpeedInStepsPerSecond(float const speedInStepsPerSecond) {
-  m_desiredSpeed_InStepsPerSecond = speedInStepsPerSecond;
+  auto const microstep = m_motorDriver->getMicrostep();
+  auto const speedInMicrostepPerSecond = speedInStepsPerSecond * static_cast<float>(microstep);
+
+  m_desiredSpeed_InStepsPerSecond = speedInMicrostepPerSecond;
   m_desiredPeriod_InUSPerStep = 1000000.0f / m_desiredSpeed_InStepsPerSecond;
 }
 
@@ -191,7 +208,10 @@ void MotorController::setSpeedInRevolutionsPerSecond(float const speedInRevoluti
 }
 
 void MotorController::setAccelerationInStepsPerSecondPerSecond(float const accelerationInStepsPerSecondPerSecond) {
-  m_acceleration_InStepsPerSecondPerSecond = accelerationInStepsPerSecondPerSecond;
+  auto const microstep = m_motorDriver->getMicrostep();
+  auto const accelerationInMicrostepPerSecondPerSecond = accelerationInStepsPerSecondPerSecond * static_cast<float>(microstep);
+
+  m_acceleration_InStepsPerSecondPerSecond = accelerationInMicrostepPerSecondPerSecond;
   m_acceleration_InStepsPerUSPerUS = m_acceleration_InStepsPerSecondPerSecond / 1E+12f;
 
   m_periodOfSlowestStep_InUS = 1000000.0f / std::sqrt(2.0f * m_acceleration_InStepsPerSecondPerSecond);
@@ -207,7 +227,10 @@ void MotorController::setAccelerationInRevolutionsPerSecondPerSecond(float const
 }
 
 void MotorController::setDecelerationInStepsPerSecondPerSecond(float const decelerationInStepsPerSecondPerSecond) {
-  m_deceleration_InStepsPerSecondPerSecond = decelerationInStepsPerSecondPerSecond;
+  auto const microstep = m_motorDriver->getMicrostep();
+  auto const decelerationInMicrostepPerSecondPerSecond = decelerationInStepsPerSecondPerSecond * static_cast<float>(microstep);
+
+  m_deceleration_InStepsPerSecondPerSecond = decelerationInMicrostepPerSecondPerSecond;
   m_deceleration_InStepsPerUSPerUS = m_deceleration_InStepsPerSecondPerSecond / 1E+12f;
 }
 
@@ -264,8 +287,11 @@ void MotorController::setTargetPositionToStop() {
 }
 
 void MotorController::setTargetPositionInSteps(int32_t const absolutePositionToMoveToInSteps) {
+  auto const microstep = m_motorDriver->getMicrostep();
+  auto const absolutePositionToMoveToInMicrostep = static_cast<int32_t>(absolutePositionToMoveToInSteps * microstep);
+
   m_isOnWayToHome = false;
-  m_targetPosition_InSteps = absolutePositionToMoveToInSteps;
+  m_targetPosition_InSteps = absolutePositionToMoveToInMicrostep;
   m_firstProcessingAfterTargetReached = true;
 }
 
