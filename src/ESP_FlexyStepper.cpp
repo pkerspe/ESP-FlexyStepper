@@ -1347,6 +1347,16 @@ bool ESP_FlexyStepper::processMovement(void)
     else
     {
       this->lastStepDirectionBeforeLimitSwitchTrigger = 0;
+
+      if (this->firstProcessingAfterTargetReached)
+      {
+        firstProcessingAfterTargetReached = false;
+        if (this->_targetPositionReachedCallback)
+        {
+          this->_targetPositionReachedCallback(currentPosition_InSteps);
+        }
+      }
+
       // activate brake since motor is stopped
       if (this->_isBrakeConfigured && !this->_isBrakeActive && this->_hasMovementOccuredSinceLastBrakeRelease)
       {
